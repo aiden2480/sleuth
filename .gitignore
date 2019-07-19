@@ -1,0 +1,8 @@
+# Python
+__pycache__/
+
+# Database
+assets/database.db
+
+# Log
+assets/website.log
