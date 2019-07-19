@@ -115,9 +115,17 @@ async def client():
 def run_client():
     run(client())
 
+logger = getLogger("aiohttp.access")
+logger.setLevel(10)
+handler = FileHandler("assets/website.log", mode= "w", encoding= "utf-8")
+handler.setFormatter(Formatter("%(asctime)s: %(levelname)s:\t%(message)s"))
+logger.addHandler(handler)
+
+app = web.Application(logger= logger)
+app.add_routes(routes)
 
 # Finally run the damn thing
-if __name__ == "__main__":
+if False:
     logger = getLogger("aiohttp.access")
     logger.setLevel(10)
     handler = FileHandler("assets/website.log", mode= "w", encoding= "utf-8")
