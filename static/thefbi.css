@@ -1,0 +1,14 @@
+/*
+I really cannot be bothered to create some styling right now
+*/
+
+* {
+    font-family: "Consolas";
+}
+
+.fixed-to-top {
+    background-color: #314660;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+}

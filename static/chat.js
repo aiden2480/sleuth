@@ -8,13 +8,21 @@ var socket = new WebSocket(ws_url);
 socket.onmessage = function (event) {
     var element = document.createElement("div");
     var text = document.createTextNode(event.data);
-    console.log(event.data);
+    
+    if (event.data.includes("joined the chat")) {
+        element.setAttribute("style", "color: #3498db")
+    }
+    if (event.data.includes("left the chat")) {
+        element.setAttribute("style", "color: #3498db")
+    }
     
     element.appendChild(text);
     container.appendChild(element);
+    window.scrollTo(0, 9999*99999);
 }
 
 socket.onopen = function (event) {
+    return; // This is only called when a client joins
     var element = document.createElement("div");
     var text = document.createTextNode(time()+" - Server started!");
 
@@ -25,7 +33,7 @@ socket.onopen = function (event) {
 
 socket.onclose = function (event) {
     var element = document.createElement("div");
-    var text = document.createTextNode(time()+" - Server closed for development, please refresh in a few seconds.");
+    var text = document.createTextNode(time()+" - Your connection with the server has been terminated. Please try again later.");
     
     element.appendChild(text);
     element.setAttribute("style", "color: red");

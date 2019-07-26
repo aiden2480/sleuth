@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <link rel="stylesheet" type="text/css" href="/assets/thefbi.css"/>
+        <link rel="icon" href="/assets/sleuth.jpg"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+        <title>{% block title %}Sleuth chat app{% endblock title %}</title>
+
+        {# All the meta tags required for the website embed in Discord #}
+        <meta property="og:title" content="Sleuth chat app">
+        <meta property="og:description" content="A simple chat app">
+        <meta property="og:image" content="/static/sleuth.jpg">
+        <meta name="theme-color" content="#d85200">
+
+        {% block head %}
+            {# Extra content #}
+        {% endblock head %}
+    </head>
+    <body>
+        {% block body %}
+        
+        {% endblock body %}
+    </body>
+</html>

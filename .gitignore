@@ -2,7 +2,7 @@
 __pycache__/
 
 # Database
-assets/database.db
+# assets/database.db
 
 # Log
 assets/website.log
