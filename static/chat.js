@@ -1,6 +1,13 @@
 // Set up variables
 "use strict";
-var ws_url = `ws://${window.location.hostname}:${window.location.port}${window.location.pathname}ws/`;
+if (window.location.protocol=="https:") {
+    // Secure
+    var ws_url = `wss://${window.location.hostname}:${window.location.port}${window.location.pathname}ws/`;
+} else {
+    // Insecure
+    var ws_url = `ws://${window.location.hostname}:${window.location.port}${window.location.pathname}ws/`;
+}
+
 var container = document.getElementById("chat-container");
 var socket = new WebSocket(ws_url);
 
