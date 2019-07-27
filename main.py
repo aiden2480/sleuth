@@ -8,6 +8,7 @@ from helpers import Database, MessageClient
 from jinja2 import FileSystemLoader
 from logging import Formatter, FileHandler, getLogger
 from multiprocessing import Process
+from os import environ
 from secrets import token_urlsafe as gen_token
 
 # Setup
@@ -45,7 +46,7 @@ parser.add_argument(
     default=False,
     help="Don't start the chat client to recieve messages in a new thread",
 )
-parser.add_argument("--port", type=int, default=80, help="Override the default port")
+parser.add_argument("--port", type=int, default=80, help="Override the default port provided in the env")
 args = parser.parse_args()
 
 
@@ -183,11 +184,10 @@ async def send_to_all(name, message):
     while tasks:
         done, tasks = await wait(tasks)
 
-
 # Finally run the damn thing
-if True:  # __name__ == "__main__":
+if __name__ == "__main__":
     try:
         app.add_routes(routes)
-        web.run_app(app, port=args.port)
+        web.run_app(app, port=environ.get("PORT", args.port))
     finally:
         logger.debug("=  SERVER SHUT DOWN  =")
