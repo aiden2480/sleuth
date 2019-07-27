@@ -10,15 +10,15 @@ socket.onmessage = function (event) {
     var text = document.createTextNode(event.data);
     
     if (event.data.includes("joined the chat")) {
-        element.setAttribute("style", "color: #3498db")
+        element.setAttribute("style", "color: #258cd1"); // #3498db");
     }
     if (event.data.includes("left the chat")) {
-        element.setAttribute("style", "color: #3498db")
+        element.setAttribute("style", "color: #258cd1"); // #3498db");
     }
     
     element.appendChild(text);
     container.appendChild(element);
-    window.scrollTo(0, 9999*99999);
+    window.scrollTo(0, document.body.scrollHeight);
 }
 
 socket.onopen = function (event) {
