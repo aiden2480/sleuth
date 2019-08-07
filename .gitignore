@@ -2,7 +2,7 @@
 __pycache__/
 
 # Local
-temp/*
+*.db
 templates/_template.jinja
 
 # Local environment settings
