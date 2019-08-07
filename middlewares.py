@@ -17,7 +17,7 @@ async def error_middleware(request: Request, handler):
             raise
         message = ex.reason
     
-    #return render_template("error.jinja", request, {"error": message})
+    return render_template("error.jinja", request, {"error": message, "request": request})
     return json_response({'error': message})
 
 
