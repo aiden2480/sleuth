@@ -1,0 +1,26 @@
+{% extends "_base.jinja" %}
+{% block title %}All users • Admin{% endblock title %}
+{# All users can be viewed by admins #}
+
+{% block body %}
+    <h1>View all users</h1>
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Admin status</th>
+            <th>Suspended status</th>
+        </tr>
+        {% for user in usercreds %}
+            <tr>
+                <td>{{user}}</td>
+                <td>{{usercreds[user]["admin"]}}</td>
+                <td>{{usercreds[user]["suspended"]}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    
+    <hr>
+    <button onclick="window.location.search=''">Default</button>
+    <button onclick="window.location.search='?admin'">Admin</button>
+    <button onclick="window.location.search='?suspended'">Suspension status</button>
+{% endblock body %}

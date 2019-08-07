@@ -1,0 +1,8 @@
+{% extends "_base.jinja" %}
+{% block title %}This page existn't{% endblock title %}
+{# Template that is rendered when the route is not found #}
+
+{% block body %}
+    <h2>An Error occoured while trying to access this page</h2>
+    <h4>{{error}}</h4>
+{% endblock body %}

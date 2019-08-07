@@ -1,9 +1,9 @@
 {% extends "_base.jinja" %}
+{% block title %}Home{% endblock title %}
+{# The index page of the website #}
 
 {% block body %}
-    <form action="/" method="POST">
-        <p>Username: <input name="user" type="text" required></p>
-        <p>Password: <input name="pass" type="password" required></p>
-        <button type="submit">Log in</button>
-    </form>
+    <h1><b>Sleuth</b> chat app</h1>
+    {{ lipsum(5) }}
+    {#Your authorization: {{request.cookies.get("token")}}#}
 {% endblock body %}

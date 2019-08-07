@@ -1,0 +1,12 @@
+{% extends "_base.jinja" %}
+{% block title %}Login{% endblock title %}
+{# The actual login page. If a user is already logged in, this will redirect #}
+
+{% block body %}
+    <br>
+    <form action="/login" method="POST">
+        <p>Username: <input name="user" type="text" id="user-input-field" required></p>
+        <p>Password: <input name="pass" type="password" id="pass-input-field" required></p>
+        <button type="submit">Log in</button>
+    </form>
+{% endblock body %}

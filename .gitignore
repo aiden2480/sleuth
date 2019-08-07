@@ -1,8 +1,9 @@
 # Python
 __pycache__/
 
-# Database
-# assets/database.db
+# Local
+temp/*
+templates/_template.jinja
 
-# Log
-assets/website.log
+# Local environment settings
+.env

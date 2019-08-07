@@ -3,14 +3,16 @@
     <head>
         <meta charset="utf-8"/>
         <link rel="stylesheet" type="text/css" href="/assets/thefbi.css"/>
-        <link rel="icon" href="/assets/sleuth.jpg"/>
+        <link rel="icon" href="/assets/sleuth.png"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
-        <title>{% block title %}Sleuth chat app{% endblock title %}</title>
+        <title>{% block title %}Sleuth chat app{% endblock title %} • Sleuth</title>
 
         {# All the meta tags required for the website embed in Discord #}
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Made by aidzman">
         <meta property="og:title" content="Sleuth chat app">
-        <meta property="og:description" content="A simple chat app">
-        <meta property="og:image" content="/static/sleuth.jpg">
+        <meta property="og:description" content="A simple chat app I designed for school use when all other sites are blocked by the wifi's restrictions">
+        <meta property="og:image" content="/assets/sleuth.png">
         <meta name="theme-color" content="#d85200">
 
         {% block head %}
@@ -18,8 +20,28 @@
         {% endblock head %}
     </head>
     <body>
+        {# Gotta have a navbar! #}
+        <div class="navbar">
+            <a href="/" style="padding: 0px 0px">
+                <img src="/assets/sleuth.png" href="/" alt="icon">
+            </a>
+            <a href="/">Home</a>
+            {# Extra routes in here #}
+
+            {% if request.cookies.get("token") in app.tokens.values() %}
+                {% if app.is_admin(app.rtokens[request.cookies["token"]]) %}
+                    <a href="/a/">Admin</a>
+                {% endif %}
+
+                <a href="/logout" id="star">Logout</a>
+                <a href="/chat/" id="star">Join chat</a>
+                <a id="star" class="actually-p">Welcome, {{app.rtokens[request.cookies["token"]]}}</a>
+            {% else %}
+                <a href="/login" id="star">Login</a>
+            {% endif %}
+		</div><br>
         {% block body %}
-        
+            {# Body content is defined by the children templates #}
         {% endblock body %}
     </body>
 </html>

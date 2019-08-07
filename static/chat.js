@@ -1,13 +1,19 @@
-// Set up variables
 "use strict";
-if (window.location.protocol=="https:") {
-    // Secure
-    var ws_url = `wss://${window.location.hostname}:${window.location.port}${window.location.pathname}ws/`;
-} else {
-    // Insecure
-    var ws_url = `ws://${window.location.hostname}:${window.location.port}${window.location.pathname}ws/`;
+
+// Get cookies
+function getCookieValue(value) {
+    var b = document.cookie.match('(^|[^;]+)\\s*' + value + '\\s*=\\s*([^;]+)');
+    return b ? b.pop() : '';
 }
 
+// Define Websocket URL
+if (window.location.protocol == "https:") { // Secure
+    var ws_url = `wss://${window.location.hostname}:${window.location.port}/websockets/${getCookieValue("token")}/`
+} else { // Insecure
+    var ws_url = `ws://${window.location.hostname}:${window.location.port}/websockets/${getCookieValue("token")}/`
+}
+
+// Set up variables
 var container = document.getElementById("chat-container");
 var socket = new WebSocket(ws_url);
 
@@ -47,7 +53,7 @@ socket.onclose = function (event) {
     container.appendChild(element);
 }
 
-// Other Functions
+// Helper Functions
 function time () {
     var today = new Date();
     return today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();

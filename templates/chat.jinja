@@ -1,19 +1,19 @@
 {% extends "_base.jinja" %}
+{% block title %}{{name}} in chat{% endblock title %}
 
 {% block body %}
-    <div class="fixed-to-top">
+    <br><br>
+    <div id="chat-container">
+        <script type="text/javascript" src="/assets/chat.js"></script>
+    </div>
+
+    <br><br>
+    <div class="chat-message-sender">
+        <hr>
         <form onsubmit="return false" style="color: white">
-            <img src="/assets/sleuth.jpg" alt="icon" style="width: 46px; height: 46px">
-            Sleuth chat app •
             <input id="message-field" type="text" placeholder="Enter a message">
             •
             <button onclick="send_message()">Send</button>
         </form>
-        <hr style="background">
-    </div>
-    
-    <br><br><br><br>
-    <div id="chat-container">
-        <script type="text/javascript" src="/assets/chat.js"></script>
     </div>
 {% endblock body %}
