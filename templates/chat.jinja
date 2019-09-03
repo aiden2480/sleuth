@@ -1,19 +1,23 @@
 {% extends "_base.jinja" %}
-{% block title %}{{name}} in chat{% endblock title %}
+{% block title %}{{ name }} in chat{% endblock title %}
 
 {% block body %}
     <br><br>
     <div id="chat-container">
-        <script type="text/javascript" src="/assets/chat.js"></script>
+        <script type="text/javascript" src="/static/js/chatnew.js">window.location.hash="";</script>
     </div>
 
-    <br><br>
+    <div style="height: 60px; width: 100%"></div>
     <div class="chat-message-sender">
         <hr>
-        <form onsubmit="return false" style="color: white">
-            <input id="message-field" type="text" placeholder="Enter a message">
+        <form onsubmit="return false" autocomplete="off" style="color: white">
+            <input id="message-field" type="text" placeholder="Please wait while the server establishes a connection" maxlength="200" disabled>
             •
             <button onclick="send_message()">Send</button>
+            <span id="remove-hash" style="color:white" hidden>
+                •
+                <button onclick="window.location.hash='#'">Remove hash</button>
+            </span>
         </form>
     </div>
 {% endblock body %}

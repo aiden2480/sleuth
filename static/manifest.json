@@ -1,0 +1,30 @@
+{
+    "name": "Sleuth chat app",
+    "short_name": "Sleuth",
+    "description": "A simple chat app I designed for school use when all other sites are blocked by the wifi's restrictions",
+    "theme_color": "#d85200",
+    "background_color": "#34475e",
+    "display": "standalone",
+    "orientation": "any",
+    "scope": "/",
+    "start_url": "/",
+    "serviceworker": {
+        "src": "service-worker.js",
+        "scope": "/",
+        "use_cache": true
+    },
+    "icons": [
+        {
+            "src": "/static/images/sleuth.png",
+            "sizes": "128x128"
+        },
+        {
+            "src": "/static/images/sleuth-192x192.jpg",
+            "sizes": "192x192"
+        },
+        {
+            "src": "/static/images/sleuth-512x512.jpg",
+            "sizes": "512x512"
+        }
+    ]
+}

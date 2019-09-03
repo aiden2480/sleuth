@@ -1,9 +1,8 @@
 # Python
 __pycache__/
 
-# Local
-*.db
-templates/_template.jinja
-
-# Local environment settings
+# Environment settings
 .env
+
+# Sum weird shit
+temp/

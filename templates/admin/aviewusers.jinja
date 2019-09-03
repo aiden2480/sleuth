@@ -12,9 +12,9 @@
         </tr>
         {% for user in usercreds %}
             <tr>
-                <td>{{user}}</td>
-                <td>{{usercreds[user]["admin"]}}</td>
-                <td>{{usercreds[user]["suspended"]}}</td>
+                <td>{{ user }}</td>
+                <td>{{ usercreds[user]["admin"] }}</td>
+                <td>{{ usercreds[user]["suspended"] }}</td>
             </tr>
         {% endfor %}
     </table>

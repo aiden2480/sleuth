@@ -1,6 +1,15 @@
 {% extends "_base.jinja" %}
 {% block title %}Login{% endblock title %}
-{# The actual login page. If a user is already logged in, this will redirect #}
+
+{% block head %}
+    <script>
+        function check_params() {
+            var login_field = document.getElementsByName("user")[0];
+            var username = new URL(location.href).searchParams.get("username");
+            if (username) {login_field.value = username;}
+        }
+    </script>
+{% endblock head %}
 
 {% block body %}
     <br>
@@ -9,4 +18,5 @@
         <p>Password: <input name="pass" type="password" id="pass-input-field" required></p>
         <button type="submit">Log in</button>
     </form>
+    <script>check_params()</script>
 {% endblock body %}

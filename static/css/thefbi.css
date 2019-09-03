@@ -1,0 +1,128 @@
+/*
+COLOUR        HEX CODE
+----------------------
+Navyblue       #34475e
+Darknavyblue   #28374b
+Orange         #d85200
+Lightorange    #df7432
+White          #fffdff
+Cream          #EAE0C7
+*/
+
+/* Custom font coz crappy macs won't just accept 'font-family: Consolas' 🙄 */
+@font-face {
+    font-family: "CustomConsolas";
+    src: url("/static/fonts/consolas.eot");
+    src: url("/static/fonts/consolas.ttf") format("truetype"),
+         url("/static/fonts/consolas.otf") format("opentype"),
+         url("/static/fonts/consolas.woff") format("woff"),
+         url("/static/fonts/consolas.woff2") format("woff2");
+}
+
+/* Global properties */
+* {
+    font-family: "CustomConsolas";
+    color: #d85200;
+}
+
+/* General */
+button {
+    border: none;
+    text-align: center;
+    padding: 7px;
+    color: #EAE0C7;
+    border-radius: 8px;
+    background-color: #d85200;
+}
+input {
+    border: 2px solid #d85200;
+    border-radius: 5px;
+}
+
+/* Chat styling */
+.chat-message-sender {
+    background-color: #314660;
+    position: fixed;
+    width: 100%;
+    height: 60px;
+    bottom: 0;
+    left: 0;
+    text-indent: 10px;
+}
+.chat-message-sender input {
+    width: 60%;
+}
+#chat-container * {
+    word-wrap: break-word;
+    transition: text-shadow .6s;
+}
+#chat-container *:target {
+    text-shadow: 0 0 1px, 0 0 1px;
+}
+input#message-field {
+    border: none;
+    height: 23px;
+    flex-grow: 2;
+    color: #df7432;
+    background-color: #28374b;
+    border-bottom: 2px solid #d85200;
+}
+input#message-field[disabled] {
+    background-color: #34475e;
+}
+
+/* Center div */
+.center-div {
+    position: absolute;
+    margin: auto; overflow: auto;
+    top: 0; right: 0;
+    bottom: 0; left: 0;
+    width: 525px; height: 170px;
+    background-color: #34475e;
+    border-radius: 4px;
+    text-align: center;
+    color: #EAE0C7;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {width: 15px}
+::-webkit-scrollbar-track {background: #EAE0C7}
+::-webkit-scrollbar-thumb {background: #28374b}
+::-webkit-scrollbar-thumb:hover {background: #28374b}
+
+/* Gotta have a navbar! */
+nav {
+    background-color: #34475e;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+}
+nav img {
+    float: left;
+    width: 46px;
+    height: 46px;
+}
+nav a {
+    float: left;
+    display: block;
+    color: #EAE0C7;
+    font-weight: 500;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+nav a:hover {
+    color: #d85200;
+    font-weight: bold;
+}
+nav a.star {
+    color: #d85200;
+    font-weight: bold;
+    float: right;
+}
+nav a.star:hover {
+    color: #EAE0C7;
+}
+nav a.star#actually-p {
+    color: #EAE0C7;
+    font-weight: 500;
+}

@@ -1,9 +1,55 @@
 {% extends "_base.jinja" %}
 {% block title %}Home{% endblock title %}
-{# The index page of the website #}
+
+{% block head %}
+    <script>
+        var check_notification_status = function () {
+            document.getElementById("notification-status").innerText = Notification.permission;
+            var description = document.getElementById("notification-description");
+            
+            if (Notification.permission == "granted") {description.innerText = "You will receive notifications in chat when a message is sent and you do not have focus on the window."};
+            if (Notification.permission == "denied") {description.innerText = "You will not receive any kind of chat notifications.\nYou will have to manually enable this in your browser settings."};
+            if (Notification.permission == "default") {description.innerText = "You have not yet accepted notifications and so will not receive any until you do."};
+
+            var l = Notification.permission;
+            if (Notification.permission == "default") {
+                var button = document.createElement("button");
+                button.innerHTML = "Request notifications";
+                button.onclick = function(){Notification.requestPermission().then(function(r) {
+                    if (r != l) {window.location.reload()};
+                    });
+                };
+                document.body.appendChild(button);
+            };
+        };
+    </script>
+{% endblock head %}
 
 {% block body %}
-    <h1><b>Sleuth</b> chat app</h1>
-    {{ lipsum(5) }}
-    {#Your authorization: {{request.cookies.get("token")}}#}
+    <h1 style="border-bottom: 0px;">Sleuth chat app</h1>
+    <p style="border-top: 0px;">Use the navbar <a href="/login" style="font-weight: 750">login</a> button in the top right and then the <a href="/chat/" style="font-weight: 750">join chat</a> button to join the chat.</p>
+
+    <h2>Notifications</h2>
+    <p>
+        <span id="notification-status" style="color: orange">Uh oh</span>
+         - 
+        <span id="notification-description">If you can see this message, your notification status could not be retrieved 🤔 Either you don't have JavaScript enabled or you're on a mobile browser 😥</span>
+        <script>check_notification_status()</script>
+    </p>
+
+    <h2>Username list</h2>
+    <p>A list of users so you know who everyone is in chat</p>
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Name</th>
+        </tr>
+
+        {% for user in app.user_conversion.items() %}
+            <tr>
+                <td>{{ user[0] }}</td>
+                <td>{{ user[1] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
 {% endblock body %}

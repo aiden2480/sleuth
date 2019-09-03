@@ -1,73 +1,73 @@
-from aiohttp import web
-from aiohttp_jinja2 import template, setup as jinja2_setup, get_env as jinja2_env
-from argparse import ArgumentParser
 from asyncio import create_task, wait
 from datetime import datetime as dt
-from dotenv import load_dotenv
-from emoji import emojize, demojize
-from jinja2 import FileSystemLoader
-from logging import Formatter, FileHandler, getLogger
+from json import dumps
 from os import environ
-from secrets import token_urlsafe as gen_token
+from time import time
 
-from admin import routes as AdminRoutes, AdminApp
-from assets import Database, CustomApp
+from aiohttp import web
+from aiohttp_jinja2 import get_env as jinja2_env
+from aiohttp_jinja2 import setup as jinja2_setup
+from aiohttp_jinja2 import template
+from dotenv import load_dotenv
+from emoji import demojize, emojize
+from jinja2 import FileSystemLoader
+
+from admin import AdminApp
+from assets import CustomApp, Database
 from middlewares import Middlewares
 
 # Create app
-app = CustomApp(middlewares= Middlewares)
-app.router.add_static("/assets", "./static")
-jinja2_setup(app, loader=FileSystemLoader("./templates"))
-
-# Setup config
-history = list()
-websockets = set()
+app = CustomApp(middlewares=Middlewares)
 routes = web.RouteTableDef()
+app.router.add_static("/static", "./static")
+jinja2_setup(app, loader=FileSystemLoader("./templates"))
 load_dotenv()
 
-# Parse args
-parser = ArgumentParser(description="Startup options for the chat app")
-parser.add_argument("-host", type=str, default=None, help="Override the default host")
-parser.add_argument("-port", type=int, default=80, help="Override the default port provided in the env")
-parser.add_argument("--noadmin", default= False, action="store_true", help= "Specefies whether to add the admin routes or not")
-parser.add_argument("--print-messages", default=True, action="store_true", help="Specefies whether to print user messages or not")
-parser.add_argument("--database", type=str, default=environ.get("DATABASE_URL"), help="Specefies the postgres URL of the databasse")
-parser.add_argument("--delete-cache-messages", type=int, default=0, metavar="NUM_OF_MESSAGES", help="The length of which the server-cached messages must be before they are deleted. 0 for don't delete")
-parser.add_argument("--log-mode", type=str, default= "a", metavar="MODE", help= "The filemode in which to open the log file")
-app.args = args = parser.parse_args()
-
-# Setup logging
-logger = getLogger("aiohttp.access")
-logger.setLevel(10)
-handler = FileHandler("temp/website.log", encoding="utf-8", mode= args.log_mode)
-handler.setFormatter(Formatter("[%(asctime)s] [%(levelname)s]: %(message)s"))
-logger.addHandler(handler)
-logger.debug((
-    "=   SERVER STARTED   ="
-    f"\n\tMaster access token: {app.master_token!r}\n"
-))
-app.logger = logger
+# Parse .env config
+app.args = dict(
+    host=environ.get("HOST", None),
+    port=int(environ.get("PORT", 80)),
+    noadmin=False if str(environ.get("NO_ADMIN", False)).upper() == "FALSE" else True,
+    printmessages=True
+    if str(environ.get("PRINT_MESSAGES", True)).upper() == "TRUE"
+    else False,
+    databaseurl=environ.get("DATABASE_URL"),
+    maxcachemessagelegth=int(environ.get("MAX_CACHE_MESSAGE_LENGTH", 0)),
+    logmode=environ.get("LOG_MODE", "a"),
+)
 
 # Frontend Routes
 @routes.get("/", name="index")
 @template("index.jinja")
-async def index(request):
-    return dict(request= request)
+async def index(request: web.Request):
+    return dict(request=request)
 
 
-@routes.get("/login", name= "login")
+@routes.get("/info", name="info")
+@template("info.jinja")
+async def info(request: web.Request):
+    return dict(request=request)
+
+
+@routes.get("/offline")
+@template("offline.jinja")
+async def offline(request: web.Request) -> str:
+    """The offline page"""
+    return dict(request=request)
+
+@routes.get("/login", name="login")
 @template("login.jinja")
 async def login(request):
     token = request.cookies.get("token")
     tokens = app.tokens
-    rtokens = {v:k for k,v in tokens.items()}
-    
+    rtokens = {v: k for k, v in tokens.items()}
+
     # Check if user has already authenticated but was not logged in
     if token in rtokens:
-        return web.HTTPFound(request.app.router["chat"].url_for())
+        return web.HTTPFound(request.app.router["index"].url_for())
 
     # User has not yet authenticated
-    return dict(request= request)
+    return dict(request=request)
 
 
 @routes.get("/chat/", name="chat")
@@ -79,10 +79,10 @@ async def chat(request):
 
     # Auth checks
     if any((not cauth, cauth != token)):
-        return web.HTTPFound("/")
+        return web.HTTPFound("/login")
 
     # Passed auth checks
-    return dict(name= name, request= request)
+    return dict(name=name, request=request)
 
 
 # Backend Routes
@@ -108,7 +108,7 @@ async def login_backend(request):
     user_token = app.tokens.get(name)
     if not user_token:
         with Database() as db:
-            db.set_user_token(name, gen_token())
+            db.set_user_token(name, app.gen_token())
     success.set_cookie("token", app.tokens.get(name))
 
     return success
@@ -122,6 +122,30 @@ async def logout_backend(request: web.Request):
     return resp
 
 
+@routes.get("/redirect")
+async def redirect_backend(request: web.Request):
+    if request.query.get("r"):
+        return web.HTTPFound(request.query.get("r"))
+    return web.HTTPFound("/")
+
+
+@routes.get("/service-worker.js")
+async def sw(request):
+    with open("./static/js/service-worker.js") as j:
+        return web.Response(body=j.read(), content_type="application/javascript")
+
+
+@routes.get("/sitemap.xml")
+async def sitemap(request: web.Request):
+    with open("./static/_sitemap.xml") as s:
+        bits = str(request.url).split("/")
+        url = f"https://{bits[2]}"
+        return web.Response(
+            body=s.read().replace("[BASE]", url), content_type="application/xml"
+        )
+
+
+# Websocket stuff
 @routes.get("/websockets/{token}/")
 async def chat_backend(request):
     token = request.match_info["token"]
@@ -129,55 +153,65 @@ async def chat_backend(request):
     name = app.rtokens.get(token)
 
     await ws.prepare(request)
-    await send_fn("system", f"{name} joined the chat")
+    await send("system", f"{name} joined the chat", "user_join")
 
-    for text in list(history):
-        await ws.send_str(text)
-    websockets.add(ws)
+    for text in list(app.history):
+        await ws.send_str(dumps(text))
+    app.websockets.add(ws)
 
     try:
         async for msg in ws:
             if msg.type == 1:
-                await send_fn(name, msg.data)
+                if msg.data == "":
+                    print(f"Pinged by {name} at {time()}!")
+                else:
+                    # Max 200 characters
+                    await send(name, msg.data[:200])
             elif msg.type == 258:
-                print("ws connection closed with exception %s" % ws.exception())
+                print("WebSocket connection closed with exception %s" % ws.exception())
     finally:
-        websockets.remove(ws)
-
-    await send_fn("system", f"{name} left the chat")
+        app.websockets.remove(ws)
+        await send("system", f"{name} left the chat", "user_leave")
     return ws
 
-# Send function
-async def send_fn(name, message):
-    text = emojize(f"{dt.now():%H:%M:%S} - {name}: {message}", use_aliases=True)
-    history.append(text)
 
-    if args.print_messages:
-        print(demojize(text))
-    if args.delete_cache_messages != 0:
-        if len(history) > args.delete_cache_messages:
-            del history[:10]
+# Send function
+async def send(name, content, _type="message"):
+    """Send a message to all websockets"""
+    text = emojize(content, use_aliases=True)
+    data = dict(
+        type=_type,
+        content=text,
+        timestamp=time(),
+        author=name,
+        id=app.create_message_id(),
+    )
+    fmt = f"{dt.fromtimestamp(data['timestamp']):%H:%M:%S} - {data['author']}: {data['content']}"
 
     tasks = set()
-    for ws in websockets:
-        tasks.add(create_task(ws.send_str(text)))
+    app.history.append(data)
+    if app.args["printmessages"]:
+        print(demojize(fmt))
+    if app.args["maxcachemessagelegth"] != 0:
+        if len(app.history) > app.args["maxcachemessagelegth"]:
+            del app.history[:10]
+
+    for ws in app.websockets:
+        tasks.add(create_task(ws.send_str(dumps(data))))
     while tasks:
         done, tasks = await wait(tasks)
 
 
 # Finally run the damn thing
 if __name__ == "__main__":
-    try:
-        # Add routes
-        if not args.noadmin:
-            app.add_subapp("/a", AdminApp)
-        app.add_routes(routes)
-        
-        # Add globals
-        env = jinja2_env(app)
-        env.globals.update(app= app)
+    # Add routes
+    if not app.args["noadmin"]:
+        app.add_subapp("/a", AdminApp)
+    app.add_routes(routes)
 
-        # Run the app
-        app.run(host= args.host, port= environ.get("PORT", args.port))
-    finally:
-        logger.debug("=  SERVER SHUT DOWN  =")
+    # Add globals
+    env = jinja2_env(app)
+    env.globals.update(app=app)
+
+    # Run the app
+    app.run(host=app.args["host"], port=app.args["port"])
