@@ -8,9 +8,9 @@ function getCookieValue(value) {
 
 // Define Websocket URL
 if (window.location.protocol == "https:") { // Secure
-    var ws_url = `wss://${window.location.hostname}:${window.location.port}/websockets/${getCookieValue("token")}/`
+    var ws_url = `wss://${window.location.hostname}:${window.location.port}/websockets/${getCookieValue("sleuth_token")}/`
 } else { // Insecure
-    var ws_url = `ws://${window.location.hostname}:${window.location.port}/websockets/${getCookieValue("token")}/`
+    var ws_url = `ws://${window.location.hostname}:${window.location.port}/websockets/${getCookieValue("sleuth_token")}/`
 }
 
 // Set up variables
@@ -69,7 +69,7 @@ socket.onopen = function() {
     var message_field = document.getElementById("message-field");
     message_field.removeAttribute("disabled");
     message_field.focus();
-    message_field.setAttribute("placeholder", " Enter a message (max 200 chars)");
+    message_field.setAttribute("placeholder", "Enter a message (max 200 chars)");
 }
 
 socket.onclose = function() {
@@ -117,18 +117,11 @@ function send_message() {
 function display_message(content, colour = "default", id = 0, add_timestamp = true) {
     // Displays a message in the chat
     var element = document.createElement("div");
-    function urlify(text) {
-        // Send URLs in chat!
-        var urlRegex = /(https?:\/\/[^\s]+)/g;
-        return text.replace(urlRegex, function(url) {
-            return `<a href="${url}">${url}</a>`;
-        })
-    }
     
     if (add_timestamp) {
-        var text = document.createTextNode(urlify(`${time()} - ${content}`));
+        var text = document.createTextNode(`${time()} - ${content}`);
     } else {
-        var text = document.createTextNode(urlify(content));
+        var text = document.createTextNode(content);
     }
 
     if (id > 0) {
@@ -161,6 +154,7 @@ function show_notification(messagedata) {
         // Set OnClick
         notification.onclick = function() {
             window.location.hash = messagedata.id;
+            window.focus();
         }
     }
 }
@@ -186,4 +180,5 @@ window.onhashchange = function () {
     var hash = document.getElementById("remove-hash");
     if (window.location.hash == "") {hash.hidden=true;}
     else {hash.hidden=false;}
+    scroll_to_bottom();
 }

@@ -11,17 +11,37 @@
         {# For the PWA #}
         <link rel="manifest" href="/static/manifest.json">
         <link rel="apple-touch-icon" href="/static/images/sleuth.png">
+        <script src="/upup.min.js"></script>
         <script>
-            if ("serviceWorker" in navigator){navigator.serviceWorker.register("service-worker.js")}
+            if (window.location.protocol == "http:" && !window.location.host.match(/localhost/)) {
+                console.log("[PROTOCOL] Redirecting HTTP to HTTPS");
+                var restOfUrl = window.location.href.substr(5);
+                window.location = "https:" + restOfUrl;
+            }
+            console.log(`[PROTOCOL] Your protocol is "${window.location.protocol}"`);
+
+            //if ("serviceWorker" in navigator) {navigator.serviceWorker.register("service-worker.js")}
+            UpUp.start({
+                "content-url": "offline",
+                "assets": [
+                    "/static/css/thefbi.css", "/static/images/sleuth.png",
+                    "/static/fonts/consolas.eot", "/static/fonts/consolas.oft",
+                    "/static/fonts/consolas.ttf", "/static/fonts/consolas.woff",
+                    "/static/fonts/consolas.woff2"
+                ]
+            });
         </script>
 
         {# All the meta tags required for the website embed in Discord #}
         <meta property="og:type" content="website">
         <meta property="og:site_name" content="Made by aidzman">
-        <meta property="og:title" content="Sleuth chat app">
-        <meta property="og:description" name="description" content="A simple chat app I designed for school use when all other sites are blocked by the wifi's restrictions">
+        <meta property="og:title" content="{{ self.title() }} • Sleuth chat app">
+        <meta property="og:description" content="{% block description %}A simple chat app I designed for school use when all other sites are blocked by the wifi's restrictions.{% endblock description %}">
         <meta property="og:image" content="/static/images/sleuth.png">
         <meta name="theme-color" content="#d85200">
+
+        {# Other meta tags for google and stuff (confirmation of ownership is in `index.jinja`) #}
+        <meta name="description" content="{{ self.description() }}">
 
         {% block head %}
             {# Extra content #}
@@ -29,39 +49,33 @@
     </head>
     <body>
         {# Gotta have a navbar! #}
-        <nav>
-            <a href="/" style="padding: 0px 0px">
-                <img src="/static/images/sleuth.png" href="/" alt="Sleuth icon">
-            </a>
-            <a href="/">Home</a>
-            <a href="/info">Info</a>
+        {% block navbar %}
+            <nav>
+                <a href="/" style="padding: 0px 0px">
+                    <img src="/static/images/sleuth.png" href="/" alt="Sleuth icon">
+                </a>
+                <a href="/">Home</a>
 
-            {% if request.cookies.get("token") in app.tokens.values() %}
-                {% if app.is_admin(app.rtokens[request.cookies["token"]]) %}
-                    <a href="/a/">Admin</a>
-                {% endif %}
+                {% if request.cookies.get("sleuth_token") in app.tokens.values() %}
+                    {% if app.is_admin(app.rtokens[request.cookies["sleuth_token"]]) %}
+                        <a href="/a/">Admin</a>
+                    {% endif %}
 
-                <a href="/logout" class="star">Logout</a>
-                {% if request.path != "/chat/" %}
-                    <a href="/chat/" class="star">Join chat</a>                
+                    <a href="/logout" class="star">Logout</a>
+                    {% if request.path != "/chat/" %}
+                        <a href="/chat/" class="star">Join chat</a>                
+                    {% endif %}
+                    <a class="star" id="actually-p">Welcome, {{ app.rtokens[request.cookies["sleuth_token"]] }}</a>
+                {% else %}
+                    <a href="/login" class="star">Login</a>
                 {% endif %}
-                <a class="star" id="actually-p">Welcome, {{ app.rtokens[request.cookies["token"]] }}</a>
-            {% else %}
-                <a href="/login" class="star">Login</a>
-            {% endif %}
-		</nav><br>
+            </nav><br>        
+        {% endblock navbar %}
+
         {% block body %}
             {# Code for 404 because it is otherwise redefined #}
-            <style>
-                .center-div p {
-                    float: left;
-                } .center-div p img {
-                    width: 130px; height: 130px
-                }
-            </style>
-
             <div class="center-div">
-                <p><img src="/static/images/sleuth.png" href="/" alt="Sleuth icon"></p>
+                <a href="/"><img src="/static/images/sleuth.png" alt="Sleuth icon"></a>
                 <h2>404 This page existn't</h2>
                 <h3>You find yourself in a strange place, there doesn't seem to be anything here 🤔 Click <a href="/">here</a> to return home</h3>
             </div>

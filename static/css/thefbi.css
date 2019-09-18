@@ -6,6 +6,7 @@ Darknavyblue   #28374b
 Orange         #d85200
 Lightorange    #df7432
 White          #fffdff
+Lightcream     #f4efe3
 Cream          #EAE0C7
 */
 
@@ -26,6 +27,9 @@ Cream          #EAE0C7
 }
 
 /* General */
+body {
+    background-color: #f4efe3;
+}
 button {
     border: none;
     text-align: center;
@@ -64,8 +68,26 @@ input#message-field {
     height: 23px;
     flex-grow: 2;
     color: #df7432;
+    text-indent: .6em;
     background-color: #28374b;
     border-bottom: 2px solid #d85200;
+    border-radius: 5px 5px 0px 0px;
+}
+input#message-field:focus {
+    outline: none;
+    /*border-bottom-color: #df7432;*/
+}
+input#message-field::after {
+    content: "";
+    display: block;
+    width: 0;
+    height: 2px;
+    background: #000;
+    transition: width .3s;
+}
+input#message-field:hover::after {
+    width: 100%;
+    /*transition: width .3s;*/
 }
 input#message-field[disabled] {
     background-color: #34475e;
@@ -82,6 +104,11 @@ input#message-field[disabled] {
     border-radius: 4px;
     text-align: center;
     color: #EAE0C7;
+}
+.center-div a img {
+    float: left;
+    width: 130px;
+    height: 130px;
 }
 
 /* Scrollbar */

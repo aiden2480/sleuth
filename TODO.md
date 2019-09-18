@@ -1,16 +1,32 @@
 # Todo list
-**Completed by next update**
 - [x] Admin only commands such as `/kick` or smtn idk
 - [x] Ping clients from the server, not ping the server from the clients
     - Just use `multiprocessing` to make a `Process` to ping it every now and then
 - [x] Make an `add to home screen` button (that would be cool)
     - omfg this is so fucking annoying it doesn't even work lol
-- [x] Fix images
 - [x] Make the navbar more mobile friendly
 - [x] Fix the route order in `main.py`
+- [x] Create a `logout of all sessions` button somewhere which just deletes the user's token from the cache list
+- [x] If you're scrolling through the chat history and a message is sent, don't automatically scroll to bottom
+- [x] Don't scroll to top when a hash is changed (automatically, but maybe I should make it the bottom instead)
+- [x] WE NEED A `/KICK` COMMAND
+- [x] Restyle login page
+- [x] Add reset password button
+- [x] The enter thingo from IDLE
+- [x] Fix the links thing in chat
+    - `https://google.com` becomes `<a href="https://google.com">https://google.com</a>` (somehow)
+- [x] Reformat the todo list lol
+- [x] Make different icons for user joining, user leaving etc for the notifications
+- [x] Make a seperate css sheet for just in-chat styling
+- [ ] Fix chat UI
+- [x] Fix whatever the fuck happened to `/login` to make it stop working
+- [x] Higher quality for the bigger icons
+- [ ] Nicknames in chat
+    - Sends a message in chat if someone changes their nickname
+    - When a 
+- [ ] Upload chat logs to some externall website or something
 
 **Other objectives**
-- [ ] Get rid of all the argparse bs in `main.py` and instead make it read from env
 - [ ] Rate limiting for sending messaages
 - [ ] **Make it fkn mobile friendly reeeeee**
 - [ ] Make links *link* (create a `href` element to hold them)
@@ -21,7 +37,7 @@
 - [ ] Counter for who is active in the chat
 - [ ] Profile pictures (probably inachieveable)
 - [ ] Send pictures in chat
-- [ ] Less strain on database and request time by not requesting the same data so much
+- [x] Less strain on database and request time by not requesting the same data so much
 - [ ] Profile pages (no idea what to put on em tho lol)
 - [ ] Make a typing indicator?
 

@@ -1,8 +1,13 @@
 {% extends "_base.jinja" %}
 {% block title %}You are offline{% endblock title %}
 
+{# No navbar as it uses an internet connection #}
+{% block navbar %}{% endblock navbar %}
+
 {% block body %}
-    <h1>
-        you big dumdum
-    </h1>
+    <div class="center-div">
+        <a href="/"><img src="/static/images/sleuth.png" alt="Sleuth icon"></a>
+        <h2>You are offline</h2>
+        <h3>You do not have an active internet connection, please click <a href>here</a> to reload when online.</h3>
+    </div>
 {% endblock body %}

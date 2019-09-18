@@ -14,6 +14,7 @@ from jinja2 import FileSystemLoader
 
 from admin import AdminApp
 from assets import CustomApp, Database
+from files import FileRoutes
 from middlewares import Middlewares
 
 # Create app
@@ -27,13 +28,14 @@ load_dotenv()
 app.args = dict(
     host=environ.get("HOST", None),
     port=int(environ.get("PORT", 80)),
-    noadmin=False if str(environ.get("NO_ADMIN", False)).upper() == "FALSE" else True,
+    noadmin=False if environ.get("NO_ADMIN", "False").upper() == "FALSE" else True,
     printmessages=True
-    if str(environ.get("PRINT_MESSAGES", True)).upper() == "TRUE"
+    if environ.get("PRINT_MESSAGES", "True").upper() == "TRUE"
     else False,
     databaseurl=environ.get("DATABASE_URL"),
     maxcachemessagelegth=int(environ.get("MAX_CACHE_MESSAGE_LENGTH", 0)),
     logmode=environ.get("LOG_MODE", "a"),
+    logpings=True if environ.get("LOG_PINGS", "False").upper() == "TRUE" else False,
 )
 
 # Frontend Routes
@@ -43,22 +45,16 @@ async def index(request: web.Request):
     return dict(request=request)
 
 
-@routes.get("/info", name="info")
-@template("info.jinja")
-async def info(request: web.Request):
-    return dict(request=request)
-
-
 @routes.get("/offline")
 @template("offline.jinja")
-async def offline(request: web.Request) -> str:
-    """The offline page"""
+async def offline(request: web.Request):
     return dict(request=request)
+
 
 @routes.get("/login", name="login")
 @template("login.jinja")
 async def login(request):
-    token = request.cookies.get("token")
+    token = request.cookies.get("sleuth_token")
     tokens = app.tokens
     rtokens = {v: k for k, v in tokens.items()}
 
@@ -73,7 +69,7 @@ async def login(request):
 @routes.get("/chat/", name="chat")
 @template("chat.jinja")
 async def chat(request):
-    token = request.cookies.get("token")
+    token = request.cookies.get("sleuth_token")
     name = app.rtokens.get(token)
     cauth = app.tokens.get(name)
 
@@ -109,7 +105,7 @@ async def login_backend(request):
     if not user_token:
         with Database() as db:
             db.set_user_token(name, app.gen_token())
-    success.set_cookie("token", app.tokens.get(name))
+    success.set_cookie("sleuth_token", app.tokens.get(name))
 
     return success
 
@@ -117,7 +113,7 @@ async def login_backend(request):
 @routes.get("/logout")
 async def logout_backend(request: web.Request):
     resp = web.HTTPFound("/")
-    resp.del_cookie("token")
+    resp.del_cookie("sleuth_token")
 
     return resp
 
@@ -127,22 +123,6 @@ async def redirect_backend(request: web.Request):
     if request.query.get("r"):
         return web.HTTPFound(request.query.get("r"))
     return web.HTTPFound("/")
-
-
-@routes.get("/service-worker.js")
-async def sw(request):
-    with open("./static/js/service-worker.js") as j:
-        return web.Response(body=j.read(), content_type="application/javascript")
-
-
-@routes.get("/sitemap.xml")
-async def sitemap(request: web.Request):
-    with open("./static/_sitemap.xml") as s:
-        bits = str(request.url).split("/")
-        url = f"https://{bits[2]}"
-        return web.Response(
-            body=s.read().replace("[BASE]", url), content_type="application/xml"
-        )
 
 
 # Websocket stuff
@@ -163,7 +143,8 @@ async def chat_backend(request):
         async for msg in ws:
             if msg.type == 1:
                 if msg.data == "":
-                    print(f"Pinged by {name} at {time()}!")
+                    if app.args["logpings"]:
+                        print(f"Pinged by {name} at {time()}!")
                 else:
                     # Max 200 characters
                     await send(name, msg.data[:200])
@@ -182,7 +163,7 @@ async def send(name, content, _type="message"):
     data = dict(
         type=_type,
         content=text,
-        timestamp=time(),
+        timestamp=round(time(), 2),
         author=name,
         id=app.create_message_id(),
     )
@@ -208,10 +189,11 @@ if __name__ == "__main__":
     if not app.args["noadmin"]:
         app.add_subapp("/a", AdminApp)
     app.add_routes(routes)
+    app.add_routes(FileRoutes)
 
     # Add globals
     env = jinja2_env(app)
     env.globals.update(app=app)
 
     # Run the app
-    app.run(host=app.args["host"], port=app.args["port"])
+    app.run()

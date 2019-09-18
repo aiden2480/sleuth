@@ -16,7 +16,7 @@ def admin_required(f):
 
         # Grab the required data
         app = request.app
-        token = request.cookies.get("token")
+        token = request.cookies.get("sleuth_token")
         tokens = app.tokens
         rtokens = {v: k for k, v in tokens.items()}
         user = rtokens.get(token)

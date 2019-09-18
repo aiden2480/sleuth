@@ -13,17 +13,27 @@
         "scope": "/",
         "use_cache": true
     },
+    "content_scripts": [
+        {
+            "matches": ["http://*/*"],
+            "css": ["statis/css/thefbi.css"]
+        }
+    ],
     "icons": [
         {
             "src": "/static/images/sleuth.png",
             "sizes": "128x128"
         },
         {
-            "src": "/static/images/sleuth-192x192.jpg",
+            "src": "/static/images/sleuth-144x144.png",
+            "sizes": "144x144"
+        },
+        {
+            "src": "/static/images/sleuth-192x192.png",
             "sizes": "192x192"
         },
         {
-            "src": "/static/images/sleuth-512x512.jpg",
+            "src": "/static/images/sleuth-512x512.png",
             "sizes": "512x512"
         }
     ]
