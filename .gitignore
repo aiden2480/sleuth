@@ -1,8 +1,8 @@
-# Python
+# Auto-generated pycache
 __pycache__/
 
 # Environment settings
 .env
 
-# Sum weird shit
-temp/
+# Useless stoof
+local/

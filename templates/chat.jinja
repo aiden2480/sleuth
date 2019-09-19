@@ -1,6 +1,10 @@
 {% extends "_base.jinja" %}
 {% block title %}{{ name }} in chat{% endblock title %}
 
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="/static/css/chat.css"/>
+{% endblock head %}
+
 {% block body %}
     <br><br>
     <div id="chat-container">

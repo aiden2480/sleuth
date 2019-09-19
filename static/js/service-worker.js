@@ -1,4 +1,8 @@
 "use strict";
+/*
+TBH I don't even know why this is still here:
+I replaced this with UpUp (see `upup.min.js` in the `static/js` folder)
+*/
 
 // Incrementing CACHE_VERSION will kick off the install event and force previously cached
 // resources to be cached again.

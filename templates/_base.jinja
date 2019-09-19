@@ -20,7 +20,6 @@
             }
             console.log(`[PROTOCOL] Your protocol is "${window.location.protocol}"`);
 
-            //if ("serviceWorker" in navigator) {navigator.serviceWorker.register("service-worker.js")}
             UpUp.start({
                 "content-url": "offline",
                 "assets": [
@@ -42,6 +41,14 @@
 
         {# Other meta tags for google and stuff (confirmation of ownership is in `index.jinja`) #}
         <meta name="description" content="{{ self.description() }}">
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-148358117-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            
+            gtag("js", new Date());
+            gtag("config", "UA-148358117-1");
+        </script>
 
         {% block head %}
             {# Extra content #}

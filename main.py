@@ -131,6 +131,7 @@ async def chat_backend(request):
     token = request.match_info["token"]
     ws = web.WebSocketResponse()
     name = app.rtokens.get(token)
+    ws.name, ws.token = name, token
 
     await ws.prepare(request)
     await send("system", f"{name} joined the chat", "user_join")
@@ -148,6 +149,11 @@ async def chat_backend(request):
                 else:
                     # Max 200 characters
                     await send(name, msg.data[:200])
+                    if msg.data == "logout":
+                        for w in app.websockets.copy():
+                            await w.close()
+                        app.websockets.clear()
+                        await send("system", f"{name} has kicked all users")
             elif msg.type == 258:
                 print("WebSocket connection closed with exception %s" % ws.exception())
     finally:
