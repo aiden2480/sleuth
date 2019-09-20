@@ -4,8 +4,9 @@
         {# Basic stuff #}
         <meta charset="utf-8"/>
         <link rel="stylesheet" type="text/css" href="/static/css/thefbi.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/css/navbar.css"/>
         <link rel="icon" href="/static/images/sleuth.png"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes"/>
         <title>{% block title %}Sleuth chat app{% endblock title %} • Sleuth chat app</title>
 
         {# For the PWA #}
@@ -51,13 +52,13 @@
         </script>
 
         {% block head %}
-            {# Extra content #}
+            {# Extra content is sometimes defined #}
         {% endblock head %}
     </head>
     <body>
         {# Gotta have a navbar! #}
         {% block navbar %}
-            <nav>
+            <nav id="navbar">
                 <a href="/" style="padding: 0px 0px">
                     <img src="/static/images/sleuth.png" href="/" alt="Sleuth icon">
                 </a>

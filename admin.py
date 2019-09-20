@@ -3,7 +3,7 @@ from aiohttp_jinja2 import template
 from assets import CustomApp, Database
 
 # Setup routes
-routes = RouteTableDef()
+AdminRoutes = RouteTableDef()
 
 # Auth decorator
 def admin_required(f):
@@ -45,22 +45,14 @@ def admin_required(f):
 
 
 # Admin Routes
-@routes.get("/")
+@AdminRoutes.get("/")
 @template("admin/aindex.jinja")
 @admin_required
 async def index(request: Request):
     return dict(request=request)
 
 
-@routes.get("/quit")
-@admin_required
-async def quit(request: Request):
-    await request.app.shutdown()
-    await request.app.cleanup()
-    raise KeyboardInterrupt("Web shut down")
-
-
-@routes.get("/viewusers")
+@AdminRoutes.get("/viewusers")
 @template("admin/aviewusers.jinja")
 @admin_required
 async def viewusers(request: Request):
@@ -76,13 +68,4 @@ async def viewusers(request: Request):
 
 # Create the app
 AdminApp = CustomApp()
-AdminApp.add_routes(routes)
-
-# Run the app if desired
-if __name__ == "__main__":
-    from aiohttp_jinja2 import setup as jinja2_setup
-    from jinja2 import FileSystemLoader
-
-    AdminApp.router.add_static("/static", "./static")
-    jinja2_setup(AdminApp, loader=FileSystemLoader("./templates"))
-    AdminApp.run(port=4321)
+AdminApp.add_routes(AdminRoutes)

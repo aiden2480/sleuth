@@ -8,17 +8,6 @@
     "orientation": "any",
     "scope": "/",
     "start_url": "/",
-    "serviceworker": {
-        "src": "service-worker.js",
-        "scope": "/",
-        "use_cache": true
-    },
-    "content_scripts": [
-        {
-            "matches": ["http://*/*"],
-            "css": ["statis/css/thefbi.css"]
-        }
-    ],
     "icons": [
         {
             "src": "/static/images/sleuth.png",

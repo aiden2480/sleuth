@@ -11,6 +11,9 @@ Tasks are categorised
 - [ ] Create a `logout of all sessions` button somewhere which just deletes the user's token from the cache list
 - [ ] Add reset password button
 
+## User settings page
+- [x] Needs to be created!
+
 ## In chat
 - [x] Admin only commands such as `/kick` or smtn idk
     - [ ] Allow suspending from chat too
@@ -23,7 +26,6 @@ Tasks are categorised
     - Sends a message in chat if someone changes their nickname
     - Save nicknames to database?
     - When a user joins the chat, send a message that says what everyones usernames/nicknames are
-- [ ] Remove anti-kpop thing as it works for japanese kanji like naniiiiiiii
 - [ ] Rate limiting for sending messaages
 - [ ] Coloured text for messages
 - [ ] Different channels to send messages in
@@ -34,20 +36,21 @@ Tasks are categorised
 ## Login page
 - [ ] Fix margin on the login page to be 46px from the top
 - [ ] Be able to pull `next` queries from the url
+- [ ] Add a search paramater that says the login requires admin
+    - After `next` thingo (above)
 
 ## Database
 - [x] Less strain on database and request time by not requesting the same data so much
     - Use a cache system
 - [ ] Completely redesign internal database structure
-    - Just one table
-    - Format is `id`, `name`, `pass`, `realname`, `token`
+    - Just one table where the format is `id`, `name`, `pass`, `realname`, `nickname`, `token`
 
 ## Miscellaneous
 - [ ] Higher quality for the bigger icons
 - [ ] Upload chat logs to some external website or something
 - [ ] Offline page auto pings server until online?
-
 - [ ] Profile pages (no idea what to put on em tho lol)
+- [x] Fix the `no directory at` error thingo
 
 # Notes
 - [ ] Empty Checkbox means not started yet

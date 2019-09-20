@@ -1,0 +1,12 @@
+{% extends "_base.jinja" %}
+{% block title %}User settings • {{ name }}{% endblock title %}
+
+{% block body %}
+    <h1>User settings for <b>{{ name }}</b></h1>
+    <table id="user-settings-table" class="center-div">
+        <tr>
+            <th>Nickname settings</th>
+            <th>Password settings</th>
+        </tr>
+    </table>
+{% endblock body %}

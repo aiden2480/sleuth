@@ -21,6 +21,7 @@ class CustomApp(web.Application):
         self._tokens = dict()
         self.database = Database()
         self.gen_token = gen_token
+        self.args: dict
 
         self.user_conversion = dict(
             # A big ol' list of usernames!
@@ -94,7 +95,7 @@ class CustomApp(web.Application):
 
         def predicate(request: web.Request):
             token = request.cookies.get("sleuth_token")
-            tokens = self.app.tokens
+            tokens = self.tokens
             rtokens = {v: k for k, v in tokens.items()}
             user = rtokens.get(token)
 
@@ -192,11 +193,13 @@ class Database(object):
         print("15 seconds passed", (dt.now() - self.last_query_time).seconds >= 15 * 60)
         print("force", force)
         print("empty cache", getattr(self, "cache", dict()) == dict())
-        p = any((
-            (dt.now() - self.last_query_time).seconds >= 15 * 60,
-            bool(force),
-            getattr(self, "cache", dict()) == dict(),
-        ))
+        p = any(
+            (
+                (dt.now() - self.last_query_time).seconds >= 15 * 60,
+                bool(force),
+                getattr(self, "cache", dict()) == dict(),
+            )
+        )
         if p != True:
             return print('"p" is not true! Aborting!')
         print('"p" is true! Continuing!')
@@ -214,27 +217,30 @@ class Database(object):
         """Update the cache.\n
         This is a helper function to ``await`` the
         above ``_update_cache`` function"""
-        return run_coro(self._update_cache(force= force))
-        
+        return run_coro(self._update_cache(force=force))
 
     # Initialize the database in case it was reset
     def init_db(self, usercredsname="usercreds", usertokensname="usertokens"):
         """Initialise the database from a fresh start
         with all the setup required for the app."""
-        self(f"""
+        self(
+            f"""
             CREATE TABLE {usercredsname}(
                 "name" VARCHAR (20) NOT NULL,
                 "pass" VARCHAR (30) NOT NULL,
                 "suspended" BOOL NOT NULL DEFAULT FALSE,
                 "admin" BOOL NOT NULL DEFAULT FALSE
             )
-        """)
-        self(f"""
+        """
+        )
+        self(
+            f"""
             CREATE TABLE {usertokensname}(
                 "name" VARCHAR (20) NOT NULL,
                 "token" VARCHAR (43) NOT NULL
             )
-        """)
+        """
+        )
 
     # User creation/deletion
     def create_user(self, name, _pass):

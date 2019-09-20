@@ -49,39 +49,20 @@ input {
 ::-webkit-scrollbar-thumb {background: #28374b}
 ::-webkit-scrollbar-thumb:hover {background: #28374b}
 
-/* Gotta have a navbar! */
-nav {
+/* Center div */
+.center-div {
+    position: absolute;
+    margin: auto; overflow: auto;
+    top: 0; right: 0;
+    bottom: 0; left: 0;
+    width: 525px; height: 170px;
     background-color: #34475e;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%;
+    border-radius: 4px;
+    text-align: center;
+    color: #EAE0C7;
 }
-nav img {
+.center-div a img {
     float: left;
-    width: 46px;
-    height: 46px;
-}
-nav a {
-    float: left;
-    display: block;
-    color: #EAE0C7;
-    font-weight: 500;
-    padding: 14px 16px;
-    text-decoration: none;
-}
-nav a:hover {
-    color: #d85200;
-    font-weight: bold;
-}
-nav a.star {
-    color: #d85200;
-    font-weight: bold;
-    float: right;
-}
-nav a.star:hover {
-    color: #EAE0C7;
-}
-nav a.star#actually-p {
-    color: #EAE0C7;
-    font-weight: 500;
+    width: 130px;
+    height: 130px;
 }

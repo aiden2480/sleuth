@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from emoji import demojize, emojize
 from jinja2 import FileSystemLoader
 
-from admin import AdminApp
+from admin import AdminApp, AdminRoutes
 from assets import CustomApp, Database
 from files import FileRoutes
 from middlewares import Middlewares
@@ -34,8 +34,8 @@ app.args = dict(
     else False,
     databaseurl=environ.get("DATABASE_URL"),
     maxcachemessagelegth=int(environ.get("MAX_CACHE_MESSAGE_LENGTH", 0)),
-    logmode=environ.get("LOG_MODE", "a"),
     logpings=True if environ.get("LOG_PINGS", "False").upper() == "TRUE" else False,
+    development=True if environ.get("DEVELOPMENT", "False").upper() == "TRUE" else False,
 )
 
 # Frontend Routes
@@ -45,7 +45,7 @@ async def index(request: web.Request):
     return dict(request=request)
 
 
-@routes.get("/offline")
+@routes.get("/offline", name="offline")
 @template("offline.jinja")
 async def offline(request: web.Request):
     return dict(request=request)
@@ -66,9 +66,17 @@ async def login(request):
     return dict(request=request)
 
 
+@routes.get("/settings", name="settings")
+@template("settings.jinja")
+@app.login_required
+async def settings(request: web.Request):
+    name = app.rtokens[request.cookies["sleuth_token"]]
+    return dict(request=request, name=name)
+
+
 @routes.get("/chat/", name="chat")
 @template("chat.jinja")
-async def chat(request):
+async def chat(request: web.Request):
     token = request.cookies.get("sleuth_token")
     name = app.rtokens.get(token)
     cauth = app.tokens.get(name)
@@ -139,6 +147,10 @@ async def chat_backend(request):
     for text in list(app.history):
         await ws.send_str(dumps(text))
     app.websockets.add(ws)
+    await ws.send_str(dumps(dict(
+        type="new_connection",
+        msg=("Other users in chat: "+", ".join([w.name for w in app.websockets if w!=ws])) if len(app.websockets) > 1 else "No one else is in chat",
+    )))
 
     try:
         async for msg in ws:
@@ -149,15 +161,15 @@ async def chat_backend(request):
                 else:
                     # Max 200 characters
                     await send(name, msg.data[:200])
-                    if msg.data == "logout":
-                        for w in app.websockets.copy():
-                            await w.close()
-                        app.websockets.clear()
-                        await send("system", f"{name} has kicked all users")
+                    #if msg.data == "logout":
+                    #    for w in app.websockets.copy():
+                    #        await w.close()
+                    #    app.websockets.clear()
+                    #    await send("system", f"{name} has kicked all users")
             elif msg.type == 258:
                 print("WebSocket connection closed with exception %s" % ws.exception())
     finally:
-        app.websockets.remove(ws)
+        app.websockets.discard(ws)
         await send("system", f"{name} left the chat", "user_leave")
     return ws
 
@@ -199,7 +211,7 @@ if __name__ == "__main__":
 
     # Add globals
     env = jinja2_env(app)
-    env.globals.update(app=app)
+    env.globals.update(app=app, adminroutes=AdminRoutes)
 
     # Run the app
     app.run()

@@ -15,7 +15,6 @@ if (window.location.protocol == "https:") { // Secure
 
 // Set up variables
 window.location.hash = "";
-const re = /[\u3131-\uD79D]/ugi;
 const load_time = new Date();
 const production = !window.location.href.includes("localhost");
 
@@ -44,8 +43,11 @@ socket.onmessage = function(e) {
     var colour = "default";
     var data = JSON.parse(e.data);
     var timestamp = new Date(data.timestamp * 1000);
-    var text = `${timestamp.toLocaleTimeString()} - ${data.author}: ${data.content}`;
+    var text = /*`${timestamp.toLocaleTimeString()} -*/ `${data.author}: ${data.content}`;
 
+    if (data.type == "new_connection") {
+        return display_message(`system: ${data.msg}`, "orange");
+    }
     if (data.type == "keepalive") {
         return;
     }
@@ -59,8 +61,8 @@ socket.onmessage = function(e) {
         colour = data.colour;
     }
 
-    lastMessage = new Date();
-    display_message(text, colour, data.id, false);
+    window.lastMessage = new Date();
+    display_message(text, colour, data.id);
     show_notification(data);
 }
 
@@ -82,7 +84,8 @@ socket.onclose = function() {
     a.setAttribute("href", "");
     a.setAttribute("style", "color: red");
 
-    element.appendChild(document.createTextNode(`${time()} - Your connection with the server has been terminated. Please `));
+    element.appendChild(document.createTextNode("Your connection with the server has been terminated. Please "));
+    element.setAttribute(`Message sent: ${time()}`);
     element.appendChild(a);
     element.appendChild(document.createTextNode(" to rejoin the chat."));
 
@@ -103,9 +106,6 @@ function send_message() {
     } else if (msg_content.startsWith("/clear")) {
         container.innerHTML = "";
         display_message("Your chat logs have been cleared", "orange");
-    } else if (msg_content.match(re)) {
-        display_message("Korean is not appreciated, you koreaboo >:( You got kicked lol", "orange");
-        socket.close();
     } else if (msg_content == "") {
         // pass
     } else {
@@ -114,7 +114,7 @@ function send_message() {
     message_field.value = "";
 }
 
-function display_message(content, colour = "default", id = 0, add_timestamp = true) {
+function display_message(content, colour = "default", id = 0, add_timestamp = false) {
     // Displays a message in the chat
     var element = document.createElement("div");
     
@@ -131,6 +131,7 @@ function display_message(content, colour = "default", id = 0, add_timestamp = tr
         element.setAttribute("style", `color: ${colour}`);
     }
 
+    element.setAttribute("title", `Message sent: ${time()}`);
     element.appendChild(text);
     container.appendChild(element);
     scroll_to_bottom();
@@ -157,14 +158,6 @@ function show_notification(messagedata) {
             window.focus();
         }
     }
-}
-
-function urlify(text) {
-    // Send URLs in chat!
-    var urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, function(url) {
-        return `<a href="${url}">${url}</a>`;
-    })
 }
 
 function time() {

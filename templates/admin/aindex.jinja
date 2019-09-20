@@ -1,7 +1,15 @@
 {% extends "_base.jinja" %}
 {% block title %}Admin homepage{% endblock title %}
-{# Description of the template #}
 
 {% block body %}
-    <h1>admin homepage</h1>
+    <h1>Admin Homepage</h1>
+    <ul>
+        {% for route in adminroutes %}
+            <li>
+                <a href="{{ request.url }}{{ route.path[1:] }}">
+                    {{ request.url }}{{ route.path[1:] }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
 {% endblock body %}
