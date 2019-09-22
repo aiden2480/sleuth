@@ -65,8 +65,3 @@ async def sitemap(request):
 async def htaccess(request):
     with open("./static/.htaccess") as h:
         return Response(body=h.read())
-
-
-@FileRoutes.get("/favicon.ico")
-async def favicon(request):
-    return StaticResource("/", "./static/images/sleuth.png")

@@ -29,8 +29,8 @@ var timeout = setInterval(function() {
     var d = new Date().getTime()/1000;
 
     if (socket.readyState != socket.OPEN) {return;}
-    if (time9 < d && time9+10 > d) {display_message("system: You will be disconnected in one minute for inactivity", "orange");}
-    if (time930 < d && time930+10 > d) {display_message("system: You will be disconnected in thirty seconds for inactivity", "orange");}
+    if (time9 < d && time9+10 > d) {display_message("system", null, "system: You will be disconnected in one minute for inactivity", "orange");}
+    if (time930 < d && time930+10 > d) {display_message("system", null, "system: You will be disconnected in thirty seconds for inactivity", "orange");}
     if (time10 < d) {return socket.close();}
 
     socket.send("");
@@ -43,30 +43,27 @@ socket.onmessage = function(e) {
     var colour = "default";
     var data = JSON.parse(e.data);
     var timestamp = new Date(data.timestamp * 1000);
-    var text = /*`${timestamp.toLocaleTimeString()} -*/ `${data.author}: ${data.content}`;
+    var text = /*`${timestamp.toLocaleTimeString()} -*/ `${data.nickname||data.author}: ${data.content}`;
 
-    if (data.type == "new_connection") {
-        return display_message(`system: ${data.msg}`, "orange");
+    if (data.type == "active_users") {
+        return display_message("system", null, `system: ${data.content}`, "orange", 0);
     }
-    if (data.type == "keepalive") {
-        return;
+    if (data.type == "message_delete") {
+        return document.getElementById(data.content).remove();
     }
-    if (data.type == "user_join") {
-        colour = "#258cd1";
-    }
-    if (data.type == "user_leave") {
+    if (data.author == "system") {
         colour = "#258cd1";
     }
     if (data.colour != undefined) {
         colour = data.colour;
     }
 
-    window.lastMessage = new Date();
-    display_message(text, colour, data.id);
+    display_message(data.author, data.nickname, text, colour, data.id, timestamp.toLocaleTimeString());
     show_notification(data);
 }
 
-socket.onopen = function() {
+socket.onopen = function(e) {
+    console.log(e);
     // We have successfully connected to the server and can enable the message box
     var message_field = document.getElementById("message-field");
     message_field.removeAttribute("disabled");
@@ -74,7 +71,8 @@ socket.onopen = function() {
     message_field.setAttribute("placeholder", "Enter a message (max 200 chars)");
 }
 
-socket.onclose = function() {
+socket.onclose = function(e) {
+    console.log(e);
     // Runs when the socket connection has been closed
     var message_field = document.getElementById("message-field");
     var element = document.createElement("div");
@@ -84,15 +82,19 @@ socket.onclose = function() {
     a.setAttribute("href", "");
     a.setAttribute("style", "color: red");
 
-    element.appendChild(document.createTextNode("Your connection with the server has been terminated. Please "));
-    element.setAttribute(`Message sent: ${time()}`);
+    element.appendChild(document.createTextNode("Your connection with the server has been terminated, please "));
+    element.setAttribute("title", `Message sent: ${time()}`);
     element.appendChild(a);
     element.appendChild(document.createTextNode(" to rejoin the chat."));
+
+    if (e.reason != "") {
+        element.appendChild(document.createTextNode(` Reason for disconnection: ${e.reason}`))
+    }
 
     element.setAttribute("style", "color: red");
     container.appendChild(element);
     message_field.setAttribute("disabled", true);
-    message_field.value = " The connection to server has been closed, please reload the page.";
+    message_field.value = "The connection to server has been closed, please reload the page.";
     window.document.title = `Disconnected • ${document.title}`;
     clearInterval(timeout); // Stop pinging the server
 }
@@ -101,29 +103,29 @@ function send_message() {
     var message_field = document.getElementById("message-field");
     var msg_content = message_field.value.trim();
 
-    if (msg_content.startsWith("/quit")) {
+    if (msg_content.startsWith("!quit")) {
         socket.close();
-    } else if (msg_content.startsWith("/clear")) {
+    } else if (msg_content.startsWith("!clear")) {
         container.innerHTML = "";
-        display_message("Your chat logs have been cleared", "orange");
+        display_message("system", null, "Your chat logs have been cleared", "orange");
     } else if (msg_content == "") {
         // pass
     } else {
         socket.send(msg_content);
+        window.lastMessage = new Date();
     }
     message_field.value = "";
 }
 
-function display_message(content, colour = "default", id = 0, add_timestamp = false) {
+function display_message(author, nickname, content, colour = "default", id = 0, timestamp=null) {
     // Displays a message in the chat
     var element = document.createElement("div");
-    
-    if (add_timestamp) {
-        var text = document.createTextNode(`${time()} - ${content}`);
-    } else {
-        var text = document.createTextNode(content);
-    }
+    var text = document.createTextNode(content);
+    var p = `Message sent: ${timestamp||new Date().toLocaleTimeString()} by ${author}`;
 
+    if (nickname) {
+        p += ` as ${nickname}`
+    }
     if (id > 0) {
         element.setAttribute("id", `${id}`);
     }
@@ -131,7 +133,7 @@ function display_message(content, colour = "default", id = 0, add_timestamp = fa
         element.setAttribute("style", `color: ${colour}`);
     }
 
-    element.setAttribute("title", `Message sent: ${time()}`);
+    element.setAttribute("title", p);
     element.appendChild(text);
     container.appendChild(element);
     scroll_to_bottom();
@@ -146,7 +148,7 @@ function show_notification(messagedata) {
 
     // Checks passed
     else {
-        var notification = new Notification(`Message sent by ${messagedata.author}`, {
+        var notification = new Notification(`Message sent by ${messagedata.nickname||messagedata.author}`, {
             body: messagedata.content,
             icon: `${window.location.origin}/static/images/sleuth.png`,
             timestamp: new Date().getTime() / 1000,
@@ -175,3 +177,12 @@ window.onhashchange = function () {
     else {hash.hidden=false;}
     scroll_to_bottom();
 }
+
+// TODO: Properly make the custom context menu in chat.
+window.addEventListener("contextmenu", e => {
+    //e.preventDefault();
+    //console.log(`You clicked: ${e.target.id} with ID ${e.target.id||null}`);
+    if (e.target.parentElement.id == "chat-container" && e.target.id != "") {
+        socket.send(`!delete ${e.target.id}`);
+    }
+});

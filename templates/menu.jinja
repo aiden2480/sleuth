@@ -1,0 +1,98 @@
+<div class="menu" style="display: none">
+  <ul class="menu-options">
+    <li class="menu-option" onclick="history.go(-1);">Back</li>
+    <li class="menu-option" onclick="window.location.reload();">Reload</li>
+    <li class="menu-option">Save</li>
+    <li class="menu-option" onclick="copy(prompt(`Enter something to copy`));">Save As</li>
+    <li class="menu-option" id="clicked">Inspect</li>
+  </ul>
+</div>
+
+<h3 class="center">Right click to view custom context menu ☺☺</h3>
+
+<script>
+    const menu = document.querySelector(".menu");
+    let menuVisible = false;
+
+    const toggleMenu = command => {
+        menu.style.display = command === "show" ? "block" : "none";
+        menuVisible = !menuVisible;
+    };
+
+    const setPosition = ({ top, left }) => {
+        menu.style.left = `${left}px`;
+        menu.style.top = `${top}px`;
+        toggleMenu("show");
+    };
+
+    window.addEventListener("click", e => {
+        if(menuVisible)toggleMenu("hide");
+    });
+
+    window.addEventListener("contextmenu", e => {
+        e.preventDefault();
+        console.log(e.target);
+        alert(e.target.id);
+        const origin = {
+            left: e.pageX,
+            top: e.pageY
+        };
+        setPosition(origin);
+        document.getElementById("clicked").innerText = `You clicked: ${e.target.localName}`;
+        return false;
+    });
+</script>
+<style>
+    * {
+        font-family: "Consolas", san-serif;
+    }
+    .center {
+        text-align: center;
+    }
+    .menu {
+        width: 120px;
+        z-index: 1;
+        box-shadow: 0 4px 5px 3px rgba(0, 0, 0, 0.2);
+        position: fixed;
+        display: none;
+        transition: 0.2s display ease-in;
+    }
+    .menu .menu-options {
+        list-style: none;
+        padding: 10px 0;
+        z-index: 1;
+    }
+    .menu .menu-options .menu-option {
+        font-weight: 500;
+        z-index: 1;
+        font-size: 14px;
+        padding: 10px 40px 10px 20px;
+        cursor: pointer;
+    }
+    .menu .menu-options .menu-option:hover {
+        background: rgba(0, 0, 0, 0.2);
+    }
+    button {
+        background: grey;
+        border: none;
+    }
+    button .next {
+        color: green;
+    }
+    button[disabled="false"]:hover .next {
+        color: red;
+        animation: move 0.5s;
+        animation-iteration-count: 2;
+    }
+    @keyframes move {
+        from {
+            transform: translate(0%);
+        }
+        50% {
+            transform: translate(-40%);
+        }
+        to {
+            transform: transform(0%);
+        }
+    }
+</style>

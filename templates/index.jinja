@@ -86,12 +86,14 @@
         <tr>
             <th>Username</th>
             <th>Name</th>
+            <th>Nickname</th>
         </tr>
 
         {% for user in app.user_conversion.items() %}
             <tr>
                 <td>{{ user[0] }}</td>
-                <td>{{ user[1] }}</td>
+                <td>{{ user[1][0] }}</td>
+                <td>{{ user[1][1] or "Not set" }}</td>
             </tr>
         {% endfor %}
     </table>

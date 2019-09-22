@@ -1,0 +1,24 @@
+/* Center div */
+.center-div {
+    width: 85%;
+    max-width: 325px;
+    height: 85%;
+    max-height: 375px;
+}
+.center-div img {
+    width: 200px;
+    height: 200px;
+    float: none;
+}
+.center-div * input {
+    text-indent: .5em;
+    background-color: #f4efe3;
+    border-radius: 5px 0px 5px 0px;
+}
+
+/* Error messages */
+#error-div * {
+    display: none;
+    font-size: 75%;
+    color: lightcoral;
+}
