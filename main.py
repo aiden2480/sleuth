@@ -1,5 +1,6 @@
 from asyncio import create_task, wait
 from datetime import datetime as dt
+from datetime import timedelta as td
 from json import dumps
 from os import environ
 from time import time
@@ -10,6 +11,7 @@ from aiohttp_jinja2 import setup as jinja2_setup
 from aiohttp_jinja2 import template
 from dotenv import load_dotenv
 from emoji import demojize, emojize
+from humanize import naturaltime
 from jinja2 import FileSystemLoader
 
 from admin import AdminApp, AdminRoutes
@@ -31,13 +33,14 @@ app.args = dict(
     printmessages=True
     if environ.get("PRINT_MESSAGES", "True").upper() == "TRUE"
     else False,
-    databaseurl=environ.get("DATABASE_URL"),
+    databaseurl=environ["DATABASE_URL"],
     maxcachemessagelegth=int(environ.get("MAX_CACHE_MESSAGE_LENGTH", 0)),
     logpings=True if environ.get("LOG_PINGS", "False").upper() == "TRUE" else False,
     development=True
     if environ.get("DEVELOPMENT", "False").upper() == "TRUE"
     else False,
     commandprefix=environ.get("COMMAND_PREFIX", "!"),
+    nicknamecooldown=int(environ.get("NICKNAME_COOLDOWN", 0)),
 )
 
 # Frontend Routes
@@ -100,7 +103,7 @@ async def login_backend(request):
     name = data.get("user")
     _pass = data.get("pass")
     success = web.HTTPFound(request.app.router["index"].url_for())
-    fail = web.HTTPFound(str(request.app.router["login"].url_for())+"?incorrect")
+    fail = web.HTTPFound(str(request.app.router["login"].url_for()) + "?incorrect")
 
     # Check the creds with the database
     print(f"Attempted login with creds: {data}", end=" - ")
@@ -127,10 +130,12 @@ async def logout_backend(request: web.Request):
 
     return resp
 
+
 @routes.get("/menu")
 @template("menu.jinja")
-async def menu(r):
+async def menu():
     return dict()
+
 
 @routes.get("/redirect")
 async def redirect_backend(request: web.Request):
@@ -145,27 +150,36 @@ async def chat_backend(request):
     token = request.match_info["token"]
     ws = web.WebSocketResponse()
     name = app.rtokens.get(token)
-
-    # Store the user's settings on the websocket
     ws.name, ws.token = name, token
     ws.admin = app.is_admin(name)
+    await ws.prepare(request)
+
+    if token not in app.rtokens.keys():
+        await ws.prepare(request)
+        await send_to_ws(ws, content="Your authentication token is invalid. " \
+            "Please re-login to join the chat")
+        await ws.close(message=b"Invalid login token")
+        return ws
+
+    # Store the user's settings on the websocket
     with app.database as db:
         ws.nickname = db.get_user_nickname(ws.name)
         if db.is_suspended(name):
             # Disallow suspended users to join chat
             await ws.prepare(request)
-            await send_to_ws(ws, content="Your account has been suspended from joining the chat, please try to rejoin again later")
-            await ws.close(message="Your account is suspended")
+            await send_to_ws(ws, content="Your account has been suspended from joining the chat, " \
+                "please try to rejoin again later")
+            await ws.close(message=b"Your account is suspended")
             return ws
-
+    # TODO: WebSocket only "opens" when all the messages from history have been loaded in
 
     await ws.prepare(request)
     await send("system", f"{name} joined the chat", type="user_join")
 
-    for text in list(app.history):
-        await ws.send_json(text)
+    for msg in list(app.history):
+        await ws.send_json(msg)
     app.websockets.add(ws)
-    await process_commands(ws, "!active")
+    await process_commands(ws, f"{app.args['commandprefix']}active")
 
     try:
         async for msg in ws:
@@ -179,35 +193,64 @@ async def chat_backend(request):
                     if bool(a) and bool(b):
                         await send(ws, msg.data[:200])
             elif msg.type == 258:
-                print(f"WebSocket for \"{ws.name}\" connection closed with exception %s" % ws.exception())
+                print(
+                    f'WebSocket for "{ws.name}" connection closed with exception %s'
+                    % ws.exception()
+                )
     finally:
         app.websockets.discard(ws)
         await send("system", f"{name} left the chat", type="user_leave")
     return ws
 
 
+# Cleanup function
+async def on_shutdown(app: CustomApp):
+    for ws in app.websockets.copy():
+        await ws.close(message=b"The server is shutting down")
+
+
 # Exclusively chat functions
-# TODO: Does this need to be moved to a seperate file?
+# Does this need to be moved to a seperate file?
 async def process_commands(ws: web.WebSocketResponse, content: str) -> bool:
     """Returns if the process should carry on and send the message.
     If this returns `True`, the message was not a command and should
     be sent. If this returns `None` or `False`, the message should
     not be sent"""
+    # FIXME: This needs to be re-styled because it currently looks like shit
     if not content.startswith(app.args["commandprefix"]):
         return True
     cmd = content.split()[0][1:].lower()
     args = content.split()[1:]
-    
+
     if cmd in ["active", "online"]:
-        # TODO: Send people's usernames
-        await send_to_ws(ws, type="active_users", content=("Other users in chat: "+ ", ".join([w.name for w in app.websockets if w != ws])) if len(app.websockets) > 1 else "No one else is currently in chat")
+        # p = ("Other users in chat: "+ ", ".join([w.name for w in app.websockets if w != ws])) if len(app.websockets) > 1 else "No one else is currently in chat"
+        p = ((
+                "Other users in chat: "
+                + ", ".join([
+                    (f'{w.name} as "{w.nickname}"' if w.nickname else w.name)
+                    for w in app.websockets
+                    if w != ws
+                ])
+            )
+            if len(app.websockets) > 1
+            else "No one else is currently in chat"
+        )
+        await send_to_ws(ws, type="active_users", content=p)
     elif cmd in ["nick", "nickname"]:
-        # Checks
+        # TODO: do `clearall` before time check so you can always clear usernames if you are admin
+        d = app.last_nick_change[ws.name] + td(seconds=app.args["nicknamecooldown"])
+        with app.database as db:
+            if not d < dt.now():
+                if not db.is_admin(ws.name):
+                    return await send_to_ws(ws, content=f"Please wait before changing your nickname again. " \
+                        "You can next change your nickname {naturaltime(d)}")
         if args == []:
-            return await send_to_ws(ws, content= f"You need to specify a nickname to set. If you want to clear your nickname, use the command \"{app.args['commandprefix']}{cmd} clear\"")
-        nick = args[0][:30]
+            return await send_to_ws(ws, content=f"You need to specify a nickname to set. " \
+                "If you want to clear your nickname, use the command \"{app.args['commandprefix']}{cmd} clear\"")
+        nick = " ".join(args)[:15]
         if nick.lower() in [i.lower() for i in app.nicknamenonolist]:
-            return await send_to_ws(ws, content= f"This nickname is either already taken or is someone else's username")
+            return await send_to_ws(ws, content=f"This nickname is either already taken " \
+                "or is someone else's username")
 
         # Change the nickname
         with app.database as db:
@@ -215,6 +258,27 @@ async def process_commands(ws: web.WebSocketResponse, content: str) -> bool:
                 db.set_user_nickname(ws.name, "")
                 ws.nickname = ""
                 return await send("system", f"{ws.name} has cleared their nickname")
+            if nick.lower() == "clearall":
+                if not db.is_admin(ws.name):
+                    return await send_to_ws(ws, content="You don't have enough permissions to use this command")
+                for u in db("SELECT username FROM users"):
+                    usr = u[0]
+                    db.set_user_nickname(usr, "")
+
+                b = f"{ws.name} has cleared all user nicknames. "
+                b += (", ".join([
+                        f"{w.nickname} is now {w.name}"
+                        for w in app.websockets
+                        if w.nickname != ""
+                    ])
+                    or "No nicknames to clear"
+                )
+
+                for w in app.websockets:
+                    w.nickname = ""
+                return await send("system", b)
+
+            app.last_nick_change[ws.name] = dt.now()
             db.set_user_nickname(ws.name, nick)
             ws.nickname = nick
             await send("system", f"{ws.name} has changed their nickname to {nick}")
@@ -223,6 +287,7 @@ async def process_commands(ws: web.WebSocketResponse, content: str) -> bool:
         # TODO: Make it so a user can delete their own messages even if they don't have admin
     else:
         return True
+
 
 async def process_admin_commands(ws: web.WebSocketResponse, content: str) -> bool:
     """Returns if the process should carry on and send the message.
@@ -233,12 +298,13 @@ async def process_admin_commands(ws: web.WebSocketResponse, content: str) -> boo
         return True
     cmd = content.split()[0][1:].lower()
     args = content.split()[1:]
-    
+
+    # FIXME: If a user tries to kick/suspend a user that doesn't exist, they get disconnected
     if cmd in ["kick"]:
         if args == []:
             return
         # `usr` is the user we are trying to kick
-        args = [i for i in args if i.lower() != ws.name.lower()] # Can't kick yourself
+        args = [i for i in args if i.lower() != ws.name.lower()]  # Can't kick yourself
         usr = args[0].lower()
         reason = " ".join(args[1:]) if len(args) > 1 else "No reason provided"
         k = ""
@@ -247,18 +313,26 @@ async def process_admin_commands(ws: web.WebSocketResponse, content: str) -> boo
             return
 
         with app.database as db:
+            if usr not in db.get_all_usernames():
+                return await send_to_ws(ws, content=f"The user {usr} is not registered in the system")
+            if db.get_admin_level(usr) > db.get_admin_level(ws.name):
+                return await send_to_ws(ws, content=f"You can't kick {usr} because they " \
+                    "have a higher admin level than you")
             for w in app.websockets.copy():
-                if w.name.lower() == usr and db.get_admin_level(ws.name) > db.get_admin_level(usr):
-                    await w.close(message= f"Kicked by {ws.name} for \"{reason}\"")
+                if w.name.lower() == usr:
+                    await w.close(message=f'Kicked by {ws.name} for "{reason}"')
                     app.websockets.discard(w)
                     k = usr
-        if not k: return
+        if not k:
+            return
         await send("system", f"{ws.name} has kicked user {k}", type="user_kick")
     elif cmd in ["suspend"]:
-        # TODO: You can't suspend anyone with a higher admin ranking than you
         with app.database as db:
+            if usr not in db.get_all_usernames():
+                return await send_to_ws(ws, content=f"The user {usr} is not registered in the system")
             if db.get_admin_level(args[0]) > db.get_admin_level(ws.name):
-                return await send_to_ws(ws, content="This person has a higher admin level than you")
+                return await send_to_ws(ws, content=f"You can't suspend {args[0]} because " \
+                    "they have a higher admin level than you")
         if args == []:
             return
         await process_admin_commands(ws, f"!kick {args[0]}")
@@ -270,7 +344,6 @@ async def process_admin_commands(ws: web.WebSocketResponse, content: str) -> boo
         with app.database as db:
             db.unsuspend_user(args[0])
     elif cmd in ["delete", "del"]:
-        # pass # Handles admin version with the normal one
         # Admins can remove any message not sent by system
         if not args[0].isdigit():
             return await send_to_ws(ws, content="The message ID must be a number")
@@ -278,13 +351,13 @@ async def process_admin_commands(ws: web.WebSocketResponse, content: str) -> boo
         for msg in app.history.copy():
             if msg["id"] == m:
                 if msg["author"] == "system":
-                    return await send_to_ws(ws, content= "You can't delete this message as it is a system message 😟")
+                    return await send_to_ws(ws, content="You can't delete this message as it is a system message 😟")
 
         # Remove message from history
         for msg in app.history.copy():
             if msg["id"] == m:
                 app.history.remove(msg)
-        
+
         # Broadcast that a message was deleted
         tasks = set()
         for w in app.websockets:
@@ -294,6 +367,7 @@ async def process_admin_commands(ws: web.WebSocketResponse, content: str) -> boo
         # TODO: Make a non-admin version of this where any user can delete their own message
     else:
         return True
+
 
 async def send(*args, **kwargs):
     """Send a message to all websockets.
@@ -307,8 +381,8 @@ async def send(*args, **kwargs):
         name = args[0]
         nickname = ""
         content = args[1]
-    typ = kwargs.pop("type", "message") # Message is default
-    
+    typ = kwargs.pop("type", "message")  # "message" is default
+
     text = emojize(content, use_aliases=True)
     data = dict(
         type=typ,
@@ -336,6 +410,7 @@ async def send(*args, **kwargs):
     while tasks:
         done, tasks = await wait(tasks)
 
+
 async def send_to_ws(ws: web.WebSocketResponse, **kwargs):
     """Sends a message to a single websocket, rather than
     all of them\n
@@ -348,6 +423,7 @@ async def send_to_ws(ws: web.WebSocketResponse, **kwargs):
         kwargs["type"] = "message"
     await ws.send_json(kwargs)
 
+
 # Finally run the chat
 if __name__ == "__main__":
     # Add routes
@@ -355,13 +431,13 @@ if __name__ == "__main__":
     app.add_routes(routes)
     app.add_routes(FileRoutes)
 
+    # Add shutdown function
+    app.on_shutdown.append(on_shutdown)
+
     # Add globals
     env = jinja2_env(app)
-    env.globals.update(
-        app=app,
-        adminroutes=AdminRoutes,
-        development=app.args["development"],
-    )
+    env.globals.update(app=app, adminroutes=AdminRoutes)
+    env.globals.update(development=app.args["development"], len=len)
 
     # Run the app
     app.run()

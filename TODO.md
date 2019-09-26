@@ -11,6 +11,8 @@ The nexts tasks I am currently working on
 - [ ] Fix the route order in `main.py`
 - [ ] Ping clients from the server, not ping the server from the clients
     - Just use `multiprocessing` to make a `Process` to ping it every now and then
+- [ ] Be able to detect spam using a custom function and not send the message if it was spam and not sent by an admin. The same function to rate-limit messages too
+- [ ] Detect if a user does not have focus on a page and send a message to the server saying they are idle if so
 
 ## Index page
 - [ ] Make the navbar more mobile friendly

@@ -29,8 +29,8 @@ var timeout = setInterval(function() {
     var d = new Date().getTime()/1000;
 
     if (socket.readyState != socket.OPEN) {return;}
-    if (time9 < d && time9+10 > d) {display_message("system", null, "system: You will be disconnected in one minute for inactivity", "orange");}
-    if (time930 < d && time930+10 > d) {display_message("system", null, "system: You will be disconnected in thirty seconds for inactivity", "orange");}
+    if (time9 < d && time9+10 > d) {display_message("system", null, "You will be disconnected in one minute for inactivity", "orange");}
+    if (time930 < d && time930+10 > d) {display_message("system", null, "You will be disconnected in thirty seconds for inactivity", "orange");}
     if (time10 < d) {return socket.close();}
 
     socket.send("");
@@ -43,10 +43,10 @@ socket.onmessage = function(e) {
     var colour = "default";
     var data = JSON.parse(e.data);
     var timestamp = new Date(data.timestamp * 1000);
-    var text = /*`${timestamp.toLocaleTimeString()} -*/ `${data.nickname||data.author}: ${data.content}`;
+    var text = data.content;
 
     if (data.type == "active_users") {
-        return display_message("system", null, `system: ${data.content}`, "orange", 0);
+        return display_message("system", null, data.content, "orange", 0);
     }
     if (data.type == "message_delete") {
         return document.getElementById(data.content).remove();
@@ -82,7 +82,7 @@ socket.onclose = function(e) {
     a.setAttribute("href", "");
     a.setAttribute("style", "color: red");
 
-    element.appendChild(document.createTextNode("Your connection with the server has been terminated, please "));
+    element.appendChild(document.createTextNode("You have been disconnected from the server, please "));
     element.setAttribute("title", `Message sent: ${time()}`);
     element.appendChild(a);
     element.appendChild(document.createTextNode(" to rejoin the chat."));
@@ -120,7 +120,9 @@ function send_message() {
 function display_message(author, nickname, content, colour = "default", id = 0, timestamp=null) {
     // Displays a message in the chat
     var element = document.createElement("div");
-    var text = document.createTextNode(content);
+    var bold = document.createElement("b");
+    var authorx = document.createTextNode(nickname||author);
+    var text = document.createTextNode(`: ${content}`);
     var p = `Message sent: ${timestamp||new Date().toLocaleTimeString()} by ${author}`;
 
     if (nickname) {
@@ -130,10 +132,13 @@ function display_message(author, nickname, content, colour = "default", id = 0, 
         element.setAttribute("id", `${id}`);
     }
     if (colour != "default") {
+        bold.setAttribute("style", `color: ${colour}`)
         element.setAttribute("style", `color: ${colour}`);
     }
 
+    bold.appendChild(authorx);
     element.setAttribute("title", p);
+    element.appendChild(bold);
     element.appendChild(text);
     container.appendChild(element);
     scroll_to_bottom();
@@ -179,10 +184,10 @@ window.onhashchange = function () {
 }
 
 // TODO: Properly make the custom context menu in chat.
-window.addEventListener("contextmenu", e => {
+/*window.addEventListener("contextmenu", e => {
     //e.preventDefault();
     //console.log(`You clicked: ${e.target.id} with ID ${e.target.id||null}`);
     if (e.target.parentElement.id == "chat-container" && e.target.id != "") {
         socket.send(`!delete ${e.target.id}`);
     }
-});
+});*/

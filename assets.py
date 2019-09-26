@@ -1,7 +1,7 @@
 from asyncio import create_task
 from asyncio import run as run_coro
-from datetime import datetime as dt
-from os import getenv
+from datetime import datetime as dt, timedelta as td
+from os import environ
 from secrets import token_urlsafe as gen_token
 from time import time
 
@@ -26,8 +26,14 @@ class CustomApp(web.Application):
         with self.database as db:
             d = db.get_all_user_creds()
             self.user_conversion = {
-                i:(d[i]["realname"], d[i]["nickname"])
-                for i in sorted(d) if not d[i]["suspended"]}
+                i: (d[i]["realname"], d[i]["nickname"])
+                for i in sorted(d)
+                if not d[i]["suspended"]
+            }
+            self.last_nick_change = {
+                i: dt.now() - td(seconds=int(environ.get("NICKNAME_COOLDOWN", 0)))
+                for i in d
+            }
 
         self._current_message_id = 1
         self.history = list()
@@ -155,7 +161,7 @@ class Database(object):
 
     def __enter__(self):
         """Initialise the connection"""
-        self.conn = connect(getenv("DATABASE_URL"))
+        self.conn = connect(environ["DATABASE_URL"])
         self.cursor = self.conn.cursor()
         # self.update_cache()
         # TODO: actually pull from cache and not just ignore it
@@ -176,7 +182,7 @@ class Database(object):
             result = self.cursor.fetchall()
         except ProgrammingError as e:
             result = e
-        
+
         self.conn.commit()
         return result
 
@@ -222,7 +228,8 @@ class Database(object):
     def init_db(self):
         """Initialise the database from a fresh start
         with all the setup required for the app."""
-        self(f"""
+        self(
+            f"""
             CREATE TABLE users (
                 username VARCHAR(30) NOT NULL,
                 password VARCHAR(30) NOT NULL,
@@ -232,13 +239,16 @@ class Database(object):
                 suspended INTEGER NOT NULL DEFAULT 0,
                 admin INTEGER NOT NULL DEFAULT 0
             );
-        """)
+        """
+        )
 
     # User creation/deletion
     def create_user(self, username, password, realname, *, nickname='', token=gen_token(), suspended=0, admin=0):
         """Registers a user into the database and returns said user.
         If the username already exists, a user will not be created"""
-        return self(f"INSERT INTO users VALUES ('{username}', '{password}', '{realname}', '{nickname}', '{token}', {suspended}, {admin});")
+        return self(
+            f"INSERT INTO users VALUES ('{username}', '{password}', '{realname}', '{nickname}', '{token}', {suspended}, {admin});"
+        )
 
     def delete_user(self, username):
         """Deletes a user from the database.
@@ -285,8 +295,12 @@ class Database(object):
         """Will return `True` if a user is an admin, otherwise `False`.\n
         If a user is admin but also suspended, suspended will overrule
         and this will return `False`"""
-        return bool(self(f"SELECT * FROM users WHERE username='{username}' AND ADMIN>0 AND suspended=0"))
-    
+        return bool(
+            self(
+                f"SELECT * FROM users WHERE username='{username}' AND ADMIN>0 AND suspended=0"
+            )
+        )
+
     def get_admin_level(self, username):
         """Returns the admin level of a user, if a user has an admin level
         of `0`, they are not actually an admin. The current levels supported
@@ -296,15 +310,18 @@ class Database(object):
     # Nicknames
     def get_user_nickname(self, username):
         return self(f"SELECT nickname FROM users WHERE username='{username}'")[0][0]
-    
+
     def set_user_nickname(self, username, nickname):
-        return self(f"UPDATE users SET nickname='{nickname}' WHERE username='{username}'")
+        return self(
+            f"UPDATE users SET nickname='{nickname}' WHERE username='{username}'"
+        )
 
     # Tokens
     def get_user_token(self, username):
         """Get the users token from the database"""
         p = self(f"SELECT token FROM users WHERE username='{username}'")[0][0]
-        if bool(p): return p
+        if bool(p):
+            return p
         return self.set_user_token(username)
 
     def set_user_token(self, username, token=gen_token()):
@@ -322,8 +339,19 @@ class Database(object):
         """Returns all the user creds stored in teh database"""
         creds = {}
         for cred in self("SELECT * FROM users"):
-            creds[cred[0]] = dict(password=cred[1], realname=cred[2], nickname=cred[3], token=cred[4], suspended=cred[5], admin=cred[6])
+            creds[cred[0]] = dict(
+                password=cred[1],
+                realname=cred[2],
+                nickname=cred[3],
+                token=cred[4],
+                suspended=cred[5],
+                admin=cred[6],
+            )
         return creds
+
+    def get_all_usernames(self):
+        """All the usernames of the registered users"""
+        return [i[0] for i in self("SELECT username FROM users")]
 
 
 # Experimental tests
@@ -332,10 +360,5 @@ if __name__ == "__main__":
     with Database() as db:
         """Execute some SQL for server testing"""
 
-        d = db("SELECT username, nickname FROM users")
-        b = set()
-        for i in d:
-            b.add(i[0])
-            b.add(i[1])
-        b.discard("")
-        print(f"{d}\n\n\n{b}\n\n\n{list(b)}")
+        print(db.get_all_usernames())
+        print("aidzman" in db.get_all_usernames())

@@ -14,3 +14,4 @@ All config options are read from the environment using `os.getenv`. The current 
 6. `LOG_PINGS` :: Specefies if keepalive pings from the client should be logged :: Default `False`
 7. `DEVELOPMENT` :: Specefies if the server is being used in a testing environment :: Default `False`
 8. `COMMAND_PREFIX` :: The prefix of the commands used in chat :: Default `"!"`
+9. `NICKNAME_COOLDOWN` :: The number of seconds a user must wait between each change before being able to change it again :: Default `0` (No cooldown)

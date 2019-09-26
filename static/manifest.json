@@ -7,7 +7,7 @@
     "display": "standalone",
     "orientation": "any",
     "scope": "/",
-    "start_url": "/",
+    "start_url": "/chat/",
     "icons": [
         {
             "src": "/static/images/sleuth.png",

@@ -1,0 +1,21 @@
+/* The div's in the middle of the page holding content */
+/* I need to fix this but I'll leave it as it is for now, revert back to the old style
+div.section {
+    background-color: #34475e;
+    margin: 5px;
+    border-radius: 5px;
+    border-width: 5px;
+    width: 48.5%;
+}
+
+div.section:nth-child(even) {
+    float: right;
+    clear: right;
+    margin-left: 1%;
+}
+div.section:nth-child(odd) {
+    float: left;
+    clear: left;
+    margin-right: 1%;
+}
+*/
