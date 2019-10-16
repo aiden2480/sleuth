@@ -1,14 +1,27 @@
-# Todo list
-Tasks are categorised
+<style>* {color: #34475e; font-family: "Consolas"}</style>
+<div id="header" style="background-color: #2E4661">
+    <h1 align="center" style="font-size: 300%; color: #EAE0C7">
+        <img src="static/images/sleuth.png">
+            SLEUTH TODO LIST
+        <img src="static/images/sleuth.png">
+    </h1>
+</div>
+
+## Notes
+- [ ] Empty Checkbox means not started yet
+- [x] Marked checkbox means in progress
+    - Any indents are notes
 
 ## Next tasks
-The nexts tasks I am currently working on
-1. User settings page that includes a `logout of all sessions` button, `reset password` button and `change nickname` button
-2. Admin commands such as `/kick`
-3. Re-format database to handle storing `realname` and `nickname`
+The tasks I am focusing on from the list below
+1.  User settings page that includes a `logout of all sessions` button, `reset password` button and `change nickname` button
+2. `aiohttp_session`/`aiohttp_auth` support for user login sessions, *not* for in chat
+    - Though maybe I should make it for in chat too 🤔
+3. Ping chat clients from the server, not the server from the client
 
 ## main.py
 - [ ] Fix the route order in `main.py`
+- [ ] Add `aiohttp_session` support
 - [ ] Ping clients from the server, not ping the server from the clients
     - Just use `multiprocessing` to make a `Process` to ping it every now and then
 - [ ] Be able to detect spam using a custom function and not send the message if it was spam and not sent by an admin. The same function to rate-limit messages too
@@ -23,25 +36,16 @@ The nexts tasks I am currently working on
 - [x] Create a `logout of all sessions` button somewhere which just deletes the user's token from the cache list
 
 ## In chat
-- [x] Admin only commands such as `/kick` or smtn idk
-    - [ ] Allow suspending from chat too
-- [ ] Normal commands to show who is in chat
 - [ ] If you're scrolling through the chat history and a message is sent, don't automatically scroll to bottom
 - [ ] Don't scroll to top when a hash is changed (automatically, but maybe I should make it the bottom instead)
 - [ ] The enter thingo from IDLE to copy a message into the input bar
 - [ ] Able to send links in chat and they *actually link*
 - [ ] Make different icons for user joining, user leaving etc for the notifications
-- [x] Nicknames in chat
-    - Sends a message in chat if someone changes their nickname
-    - Save nicknames to database?
-    - When a user joins the chat, send a message that says what everyones usernames/nicknames are
 - [ ] Rate limiting for sending messaages
 - [ ] Coloured text for messages
 - [ ] Different channels to send messages in
-- [x] Counter for who is active in the chat
 - [ ] Profile pictures (probably inachieveable)
 - [ ] Send pictures in chat
-- [ ] Admin delete message command
 - [ ] Fix the `invalid date` thing
 
 ## Admin
@@ -49,16 +53,12 @@ The nexts tasks I am currently working on
 
 ## Login page
 - [ ] Fix margin on the login page to be 46px from the top
-- [ ] Be able to pull `next` queries from the url
 - [ ] Add a search paramater that says the login requires admin
-    - After `next` thingo (above)
 
 ## Database
 - [ ] `ALTER TABLE users` to set the column default for `nickname` and `token` to be `EMPTY`, not `NULL`
 - [ ] Less strain on database and request time by not requesting the same data so much
     - Use a cache system
-- [x] Completely redesign internal database structure
-    - Just one table where the format is `id`, `name`, `pass`, `realname`, `nickname`, `token`
 
 ## Miscellaneous
 - [ ] Higher quality for the bigger icons
@@ -67,8 +67,3 @@ The nexts tasks I am currently working on
 - [x] Profile pages (no idea what to put on em tho lol)
 - [x] Fix the `no directory at` error thingo
 - [ ] Use a proper colour picker because apparently piskel doesn't work properly
-
-# Notes
-- [ ] Empty Checkbox means not started yet
-- [x] Marked checkbox means in progress
-- Any indents are notes
