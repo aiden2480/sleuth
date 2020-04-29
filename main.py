@@ -243,7 +243,7 @@ async def process_commands(ws: web.WebSocketResponse, content: str) -> bool:
             if not d < dt.now():
                 if not db.is_admin(ws.name):
                     return await send_to_ws(ws, content=f"Please wait before changing your nickname again. " \
-                        "You can next change your nickname {naturaltime(d)}")
+                        f"You can next change your nickname {naturaltime(d)}")
         if args == []:
             return await send_to_ws(ws, content=f"You need to specify a nickname to set. " \
                 "If you want to clear your nickname, use the command \"{app.args['commandprefix']}{cmd} clear\"")
