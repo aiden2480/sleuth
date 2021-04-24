@@ -25,9 +25,8 @@
                 "content-url": "offline",
                 "assets": [
                     "/static/css/thefbi.css", "/static/images/sleuth.png",
-                    "/static/fonts/consolas.eot", "/static/fonts/consolas.oft",
+                    "/static/fonts/consolas.eot", "/static/fonts/consolas.woff2",
                     "/static/fonts/consolas.ttf", "/static/fonts/consolas.woff",
-                    "/static/fonts/consolas.woff2"
                 ]
             });
         </script>
@@ -42,12 +41,14 @@
 
         {# Other meta tags for google and stuff (confirmation of ownership is in `index.jinja`) #}
         <meta name="description" content="{{ self.description() }}">
-        {% if not development %}
+        {% if all((not development, request.rel_url == "/offline")) %}
             <script async src="https://www.googletagmanager.com/gtag/js?id=UA-148358117-1"></script>
             <script>
+                console.log("{{request.rel_url}}");
+                console.log("[GTAG] gtag requirements passed");
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
-                
+        
                 gtag("js", new Date());
                 gtag("config", "UA-148358117-1");
             </script>        
@@ -75,7 +76,7 @@
                     {% if request.path != "/chat/" %}
                         <a href="/chat/" class="star">Join chat</a>                
                     {% endif %}
-                    <a class="star" id="actually-p">Welcome, {{ app.rtokens[request.cookies["sleuth_token"]] }}</a>
+                    <a class="star" id="actually-p" title="Click to view user settings page" href="/settings">Welcome, {{ app.rtokens[request.cookies["sleuth_token"]] }}</a>
                 {% else %}
                     <a href="/login" class="star">Login</a>
                 {% endif %}

@@ -94,9 +94,10 @@ socket.onclose = function(e) {
     element.setAttribute("style", "color: red");
     container.appendChild(element);
     message_field.setAttribute("disabled", true);
-    message_field.value = "The connection to server has been closed, please reload the page.";
+    message_field.placeholder = "The connection to server has been closed, please reload the page.";
     window.document.title = `Disconnected • ${document.title}`;
     clearInterval(timeout); // Stop pinging the server
+    scroll_to_bottom();
 }
 
 function send_message() {

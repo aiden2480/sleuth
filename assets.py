@@ -1,14 +1,20 @@
 from asyncio import create_task
 from asyncio import run as run_coro
-from datetime import datetime as dt, timedelta as td
+from contextlib import redirect_stdout
+from datetime import datetime as dt
+from datetime import timedelta as td
+from logging.handlers import HTTPHandler
 from os import environ
 from secrets import token_urlsafe as gen_token
 from time import time
 
 from aiohttp import web
 from dotenv import load_dotenv
-from psycopg2 import connect, ProgrammingError
+from mobiledetect import MobileDetect
+from psycopg2 import ProgrammingError, connect
 from sqlparse import parse as sqlparse
+
+from _thread import start_new_thread
 
 
 # CustomApp
@@ -25,11 +31,6 @@ class CustomApp(web.Application):
 
         with self.database as db:
             d = db.get_all_user_creds()
-            self.user_conversion = {
-                i: (d[i]["realname"], d[i]["nickname"])
-                for i in sorted(d)
-                if not d[i]["suspended"]
-            }
             self.last_nick_change = {
                 i: dt.now() - td(seconds=int(environ.get("NICKNAME_COOLDOWN", 0)))
                 for i in d
@@ -64,12 +65,7 @@ class CustomApp(web.Application):
 
             # Actually check the auth
             if user is None:
-                return web.json_response(
-                    dict(
-                        status=401,
-                        message="You need to be logged in to access this resource",
-                    )
-                )
+                return web.HTTPFound(f"/login?next={request.rel_url}")
             with self.database as db:
                 if not any((db.is_admin(user), token == self.config["master_token"])):
                     return web.json_response(
@@ -96,12 +92,7 @@ class CustomApp(web.Application):
 
             # Actually check the auth
             if user is None:
-                return web.json_response(
-                    dict(
-                        status=401,
-                        message="You need to be logged in to access this resource",
-                    )
-                )
+                return web.HTTPFound(f"/login?next={request.rel_url}")
 
             # It seems we passed ¯\_(ツ)_/¯
             return f(request)
@@ -133,6 +124,16 @@ class CustomApp(web.Application):
             b.discard("")
             return list(b)
 
+    @property
+    def user_conversion(self) -> dict:
+        with self.database as db:
+            d = db.get_all_user_creds()
+            return {
+                i: (d[i]["realname"], d[i]["nickname"])
+                for i in sorted(d)
+                if not d[i]["suspended"]
+            }
+
     def create_message_id(self) -> int:
         """Creates a unique message ID"""
         self._current_message_id += 1
@@ -141,6 +142,9 @@ class CustomApp(web.Application):
     def is_admin(self, user):
         with self.database as db:
             return db.is_admin(user)
+
+    async def is_mobile(self, request: web.Request):
+        return MobileDetect(useragent=request.headers["User-Agent"]).is_mobile()
 
 
 # Database
@@ -173,6 +177,7 @@ class Database(object):
 
     def __call__(self, query):
         """Execute raw SQL"""
+        # XXX: Actually implement this with the cache system
         b = sqlparse(query)[0].tokens
         if b[0].value == "select":
             print("this was a select statement!")
@@ -243,7 +248,17 @@ class Database(object):
         )
 
     # User creation/deletion
-    def create_user(self, username, password, realname, *, nickname='', token=gen_token(), suspended=0, admin=0):
+    def create_user(
+        self,
+        username,
+        password,
+        realname,
+        *,
+        nickname="",
+        token=gen_token(),
+        suspended=0,
+        admin=0,
+    ):
         """Registers a user into the database and returns said user.
         If the username already exists, a user will not be created"""
         return self(
@@ -352,6 +367,27 @@ class Database(object):
     def get_all_usernames(self):
         """All the usernames of the registered users"""
         return [i[0] for i in self("SELECT username FROM users")]
+
+
+class ThreadedHTTPHandler(HTTPHandler):
+    def __init__(self, *args, **kwargs):
+        return super().__init__(*args, **kwargs)
+
+    def emit(self, record):
+        #return start_new_thread(super().emit, (record,))
+        #return start_new_thread(self.__handle, (record,))
+        return self.__handle(record)
+
+    def __handle(self, record):
+        with redirect_stdout(None):
+            return super().emit(record)
+            
+        try:
+            return super().emit(record)
+        except TimeoutError as t:
+            self.handleError(record)
+            print(type(t))
+            print("error!")
 
 
 # Experimental tests

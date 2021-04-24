@@ -1,4 +1,4 @@
-from aiohttp.web import HTTPException, Request, Response
+from aiohttp.web import HTTPException, HTTPFound, Request, Response
 from aiohttp.web import middleware
 from aiohttp_jinja2 import render_template
 
@@ -21,20 +21,22 @@ async def error_middleware(request: Request, handler):
 
 
 @middleware
-async def internal_server_error_middleware(request: Request, handler):
-    try:
-        response = await handler(request)
-        if response.status != 500:
-            return response
-        message = response.message
-    except HTTPException as ex:
-        if ex.status != 500:
-            raise
-        message = ex.reason
+async def mobile_token_middleware(request: Request, handler):
+    token = request.cookies.get("sleuth_token")
 
-    return Response(text="Uh oh! Internal server error 😟")
-    return render_template("_base.jinja", request, dict(request=request))
+    if all((token, not request.url.query.get("token"), await request.app.is_mobile(request))):
+        return HTTPFound(str(request.rel_url) + f"?token={token}")
+    return await handler(request)
+
+
+# Helper functions
+async def is_mobile(request: Request):
+    """Returns ``True`` if the request was mobile, else ``False``"""
+    return request.app.device(request.headers["User-Agent"]).parse().is_mobile()
 
 
 # Exports
-Middlewares = [error_middleware, internal_server_error_middleware]
+Middlewares = [
+    error_middleware,
+    mobile_token_middleware,
+]

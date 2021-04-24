@@ -1,8 +1,9 @@
-from aiohttp.web import RouteTableDef, Request, Response, HTTPFound, json_response
+from aiohttp.web import RouteTableDef, Request, Response, HTTPFound, HTTPBadRequest, json_response
 from aiohttp_jinja2 import template
 from assets import CustomApp, Database
 
 # Setup routes
+APIRoutes = RouteTableDef()
 AdminRoutes = RouteTableDef()
 
 # Auth decorator
@@ -23,12 +24,7 @@ def admin_required(f):
 
         # Actually check the auth
         if user is None:
-            return json_response(
-                dict(
-                    status=401,
-                    message="You need to be logged in to access this resource",
-                )
-            )
+            return HTTPFound(f"/login?next={request.rel_url}")
         with Database() as db:
             if not any((db.is_admin(user), token == app.master_token)):
                 return json_response(
@@ -48,14 +44,14 @@ def admin_required(f):
 @AdminRoutes.get("/")
 @template("admin/aindex.jinja")
 @admin_required
-async def index(request: Request):
+async def admin_index(request: Request):
     return dict(request=request)
 
 
 @AdminRoutes.get("/viewusers")
 @template("admin/aviewusers.jinja")
 @admin_required
-async def viewusers(request: Request):
+async def admin_viewusers(request: Request):
     return dict(request=request, usercreds=request.app.usercreds)
 
     if "suspended" in request.query:
@@ -65,7 +61,26 @@ async def viewusers(request: Request):
 
     return dict(usercreds=resp, request=request)
 
+# API Routes
+@APIRoutes.get("/validuser")
+async def api_validuser(request: Request):
+    username = request.url.query.get("username")
+    password = request.url.query.get("password")
+    
+    if not all((username, password)):
+        return json_response(dict(
+            status=400,
+            result='You need to supply both "username" and "password" queries'
+        ))
+
+    with request.app.database as db:
+        if db.is_valid_login(username, password):
+            d = 200, f'The login "{username}:{password}" is correct', True
+        else:
+            d = 200, f'The login "{username}:{password}" is incorrect', False
+    return json_response(dict(status=d[0], result=d[1], correct=d[2]))
 
 # Create the app
 AdminApp = CustomApp()
+AdminApp.add_routes(APIRoutes)
 AdminApp.add_routes(AdminRoutes)

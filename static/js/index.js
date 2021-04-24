@@ -20,12 +20,14 @@ var check_notification_status = function () {
 };
 
 // Stoof for installing as a PWA
-let deferredPrompt;
-const pwadiv = document.getElementById("pwa-install-div");
-const addBtn = document.getElementById("pwa-install-button");
-pwadiv.style.display = "none";
+window.addEventListener("load", window), (e) => {
+    const pwadiv = document.getElementById("pwa-install-div");
+    pwadiv.style.display = "none";
+};
 
 window.addEventListener("beforeinstallprompt", (e) => {
+    const pwadiv = document.getElementById("pwa-install-div");
+    const addBtn = document.getElementById("pwa-install-button");
     // Prevent Chrome 67 and earlier from automatically showing the prompt
     //e.preventDefault();
     // Stash the event so it can be triggered later.

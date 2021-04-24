@@ -2,10 +2,13 @@
 COLOUR        HEX CODE
 ----------------------
 Navyblue       #34475e
+ANavyblue      #2E4661
 Darknavyblue   #28374b
 Orange         #d85200
+AOrange        #D85200
 Lightorange    #df7432
 White          #fffdff
+AWhite         #FEFEFE
 Lightcream     #f4efe3
 Cream          #EAE0C7
 */
@@ -32,7 +35,6 @@ body {
 }
 button {
     border: none;
-    text-align: center;
     padding: 7px;
     color: #EAE0C7;
     border-radius: 8px;
