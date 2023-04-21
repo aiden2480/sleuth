@@ -1,7 +1,7 @@
 emoji==0.5.1
 aiohttp==3.7.4
 psycopg2==2.8.3
-sqlparse==0.3.0
+sqlparse==0.4.4
 humanize==0.5.1
 python-dotenv==0.10.1
 aiohttp-jinja2==1.1.2
